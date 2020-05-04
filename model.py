@@ -1,12 +1,13 @@
 from keras.layers import Cropping2D, Conv2D, Dense, GlobalAveragePooling2D, Activation, Flatten, Lambda, Dropout
-from keras.models import Sequential
+from keras.models import Sequential, load_model
+import keras
 import csv
 import cv2
 import numpy
 import sklearn
 import os.path
 # center, left (steer right), right (steer left) 
-correction_angles = [[0.0, 0.2, -0.2], [0.4, 0.6, 0.5], [-0.5, -0.4, -0.7]]
+correction_angles = [[0.0, 0.2, -0.2], [0.4, 0.6, 0.5], [-0.7, -0.6, -0.9]]
 
 
 def generator(samples, batch_size=32):
@@ -76,7 +77,8 @@ with open('data/IMG_right/driving_log.csv') as csvfile:
     for line in reader:
         line.extend([2])
         lines.append(line)  
-
+    for line in lines[1963:2745]:
+        lines.append(line)
         
 with open('data/IMG_center/driving_log.csv') as csvfile:
     reader = csv.reader(csvfile)
@@ -118,23 +120,27 @@ batch_size=32
 train_generator = generator(train_samples, batch_size=batch_size)
 validation_generator = generator(validation_samples, batch_size=batch_size)
 
-model = Sequential()
-model.add(Lambda(lambda x: x / 255.0 - 0.5, input_shape=(160, 320, 3)))
-model.add(Cropping2D(cropping=((70, 25), (0, 0))))
-model.add(Conv2D(24, 5, 5, subsample=(2,2), activation="relu"))
-model.add(Dropout(0.1))
-model.add(Conv2D(36, 5, 5, subsample=(2,2), activation="relu"))
-model.add(Dropout(0.1))
-model.add(Conv2D(48, 5, 5, subsample=(2,2), activation="relu"))
-model.add(Dropout(0.1))
-model.add(Conv2D(64, 3, 3, activation="relu"))
-model.add(Dropout(0.1))
-model.add(Conv2D(64, 3, 3, activation="relu"))
-model.add(Flatten())
-model.add(Dense(100))
-model.add(Dense(50))
-model.add(Dense(10))
-model.add(Dense(1))
+LOAD = True
+if LOAD:
+    model = load_model('model.h5')
+else:
+    model = Sequential()
+    model.add(Lambda(lambda x: x / 255.0 - 0.5, input_shape=(160, 320, 3)))
+    model.add(Cropping2D(cropping=((70, 25), (0, 0))))
+    model.add(Conv2D(24, 5, 5, subsample=(2,2), activation="relu"))
+    #model.add(Dropout(0.2))
+    model.add(Conv2D(36, 5, 5, subsample=(2,2), activation="relu"))
+    #model.add(Dropout(0.2))
+    model.add(Conv2D(48, 5, 5, subsample=(2,2), activation="relu"))
+    #model.add(Dropout(0.15))
+    model.add(Conv2D(64, 3, 3, activation="relu"))
+    #model.add(Dropout(0.15))
+    model.add(Conv2D(64, 3, 3, activation="relu"))
+    model.add(Flatten())
+    model.add(Dense(100))
+    model.add(Dense(50))
+    model.add(Dense(10))
+    model.add(Dense(1))
 
 model.summary()
 
@@ -143,10 +149,12 @@ model.summary()
 # model.fit(X_train, y_train, validation_split=0.2, shuffle=True)
 
 model.compile(loss='mse', optimizer='adam')
+callbacks = []
+callbacks.append(keras.callbacks.EarlyStopping(monitor='val_loss', min_delta=0, patience=0, verbose=0, mode='auto'))
 model.fit_generator(train_generator,
             steps_per_epoch=numpy.ceil(len(train_samples)/batch_size),
             validation_data=validation_generator,
             validation_steps=numpy.ceil(len(validation_samples)/batch_size),
-            epochs=7, verbose=1)
+            epochs=5, verbose=1, callbacks=callbacks)
 
 model.save("model.h5")
