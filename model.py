@@ -122,15 +122,16 @@ validation_generator = generator(validation_samples, batch_size=batch_size)
 
 LOAD = True
 if LOAD:
+    print("loading model")
     model = load_model('model.h5')
 else:
     model = Sequential()
     model.add(Lambda(lambda x: x / 255.0 - 0.5, input_shape=(160, 320, 3)))
     model.add(Cropping2D(cropping=((70, 25), (0, 0))))
     model.add(Conv2D(24, 5, 5, subsample=(2,2), activation="relu"))
-    #model.add(Dropout(0.2))
+    model.add(Dropout(0.1))
     model.add(Conv2D(36, 5, 5, subsample=(2,2), activation="relu"))
-    #model.add(Dropout(0.2))
+    # model.add(Dropout(0.1))
     model.add(Conv2D(48, 5, 5, subsample=(2,2), activation="relu"))
     #model.add(Dropout(0.15))
     model.add(Conv2D(64, 3, 3, activation="relu"))
@@ -155,6 +156,6 @@ model.fit_generator(train_generator,
             steps_per_epoch=numpy.ceil(len(train_samples)/batch_size),
             validation_data=validation_generator,
             validation_steps=numpy.ceil(len(validation_samples)/batch_size),
-            epochs=5, verbose=1, callbacks=callbacks)
+            epochs=15, verbose=1, callbacks=callbacks)
 
 model.save("model.h5")
