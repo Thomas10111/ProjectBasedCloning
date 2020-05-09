@@ -7,11 +7,12 @@ import numpy
 import sklearn
 import os.path
 # center, left (steer right), right (steer left) 
-correction_angles = [[0.0, 0.2, -0.2], [0.4, 0.6, 0.5], [-0.7, -0.6, -0.9]]
+correction_angles = [[0.0, 0.2, -0.2], [0.6, 0.6, 0.8], [-0.8, -0.7, -1.0]]
 
 
 def generator(samples, batch_size=32):
     num_samples = len(samples)
+    print("num_samples: ", num_samples)
     samples = sklearn.utils.shuffle(samples)
     while 1: # Loop forever so the generator never terminates
         for offset in range(0, num_samples, batch_size):
@@ -85,10 +86,11 @@ with open('data/IMG_center/driving_log.csv') as csvfile:
     next(reader, None)
     for line in reader:
         line.extend([0])
-        lines.append(line)        
-
+    for line in lines[2320:2410]:
+        lines.append(line)
+        
 from sklearn.model_selection import train_test_split
-train_samples, validation_samples= train_test_split(lines, test_size=0.2)
+train_samples, validation_samples= train_test_split(lines, test_size=0.15)
  
     
 # images =  []
@@ -127,15 +129,17 @@ if LOAD:
 else:
     model = Sequential()
     model.add(Lambda(lambda x: x / 255.0 - 0.5, input_shape=(160, 320, 3)))
+    model.add(Dropout(0.2))
     model.add(Cropping2D(cropping=((70, 25), (0, 0))))
+    #model.add(Dropout(0.1))
     model.add(Conv2D(24, 5, 5, subsample=(2,2), activation="relu"))
-    model.add(Dropout(0.1))
+    #model.add(Dropout(0.1))
     model.add(Conv2D(36, 5, 5, subsample=(2,2), activation="relu"))
     # model.add(Dropout(0.1))
     model.add(Conv2D(48, 5, 5, subsample=(2,2), activation="relu"))
-    #model.add(Dropout(0.15))
+    # model.add(Dropout(0.15))
     model.add(Conv2D(64, 3, 3, activation="relu"))
-    #model.add(Dropout(0.15))
+    # model.add(Dropout(0.15))
     model.add(Conv2D(64, 3, 3, activation="relu"))
     model.add(Flatten())
     model.add(Dense(100))
@@ -156,6 +160,6 @@ model.fit_generator(train_generator,
             steps_per_epoch=numpy.ceil(len(train_samples)/batch_size),
             validation_data=validation_generator,
             validation_steps=numpy.ceil(len(validation_samples)/batch_size),
-            epochs=15, verbose=1, callbacks=callbacks)
+            epochs=5, verbose=1, callbacks=callbacks)
 
 model.save("model.h5")
