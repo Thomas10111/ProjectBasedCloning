@@ -7,14 +7,14 @@ import numpy
 import sklearn
 import os.path
 # center, left (steer right), right (steer left) 
-correction_angles = [[0.0, 0.2, -0.2], [0.6, 0.6, 0.8], [-0.8, -0.7, -1.0]]
+correction_angles = [[0.0, 0.4, -0.4], [4.3, 4.4, 4.2], [-4.3, -4.2, -4.4]]
 
 
 def generator(samples, batch_size=32):
     num_samples = len(samples)
     print("num_samples: ", num_samples)
-    samples = sklearn.utils.shuffle(samples)
     while 1: # Loop forever so the generator never terminates
+        samples = sklearn.utils.shuffle(samples)
         for offset in range(0, num_samples, batch_size):
             batch_samples = samples[offset:offset+batch_size]
 
@@ -34,15 +34,17 @@ def generator(samples, batch_size=32):
                     if image is not None:
                         #print("Found: ", current_path)
                         images.append(image)
-                        measurements.append(float(batch_sample[3])+ correction)
+                        steering_correction = float(batch_sample[3])+ correction
+                        measurements.append(steering_correction)
+                        #print("current_path: ", current_path, "      steering_correction: ", steering_correction)
+                                                
                         images.append(numpy.fliplr(image))
-                        measurements.append(-(float(batch_sample[3])+ correction))
+                        measurements.append(-steering_correction)
 
                     else:
                         print("None: ", current_path)
                         exit(-1)
 
-            # trim image to only see section with road
             X_train = numpy.array(images)
             y_train = numpy.array(measurements)
             yield sklearn.utils.shuffle(X_train, y_train)
@@ -69,25 +71,28 @@ with open('data/IMG_left/driving_log.csv') as csvfile:
     for line in reader:
         line.extend([1])
         lines.append(line)
-    for line in lines[2807:3190]:
-        lines.append(line)
+    for i in range(160): 
+        for line in lines[2807:3190]:
+            lines.append(line)
         
 with open('data/IMG_right/driving_log.csv') as csvfile:
     reader = csv.reader(csvfile)
     # next(reader, None)
     for line in reader:
         line.extend([2])
-        lines.append(line)  
-    for line in lines[1963:2745]:
         lines.append(line)
+    for i in range(160):    
+        for line in lines[1963:2745]:
+            lines.append(line)
         
 with open('data/IMG_center/driving_log.csv') as csvfile:
     reader = csv.reader(csvfile)
     next(reader, None)
     for line in reader:
         line.extend([0])
-    for line in lines[2320:2410]:
-        lines.append(line)
+    for i in range(160):     
+        for line in lines[2320:2410]:
+            lines.append(line)
         
 from sklearn.model_selection import train_test_split
 train_samples, validation_samples= train_test_split(lines, test_size=0.15)
@@ -129,7 +134,7 @@ if LOAD:
 else:
     model = Sequential()
     model.add(Lambda(lambda x: x / 255.0 - 0.5, input_shape=(160, 320, 3)))
-    model.add(Dropout(0.2))
+    # model.add(Dropout(0.1))
     model.add(Cropping2D(cropping=((70, 25), (0, 0))))
     #model.add(Dropout(0.1))
     model.add(Conv2D(24, 5, 5, subsample=(2,2), activation="relu"))
@@ -160,6 +165,7 @@ model.fit_generator(train_generator,
             steps_per_epoch=numpy.ceil(len(train_samples)/batch_size),
             validation_data=validation_generator,
             validation_steps=numpy.ceil(len(validation_samples)/batch_size),
-            epochs=5, verbose=1, callbacks=callbacks)
+            epochs=1, verbose=1, callbacks=callbacks)
 
+print("Saving model")
 model.save("model.h5")
