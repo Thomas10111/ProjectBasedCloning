@@ -59,10 +59,22 @@ with open('data/driving_log.csv') as csvfile:
     for line in reader:
         line.extend([0])
         lines.append(line)
-    
-#     # repeat for bridge
-#     for line in lines[84:165]:
-#         lines.append(line)
+    for _ in range(10):
+    #     # repeat for bridge
+        for line in lines[1744:1826]:   # 82 of 8035
+            lines.append(line)
+        for line in lines[2573:2657]:   # 84 of 8035
+            lines.append(line)
+        for line in lines[3408:3517]:   # 109 of 8035
+            lines.append(line)
+        for line in lines[5208:5291]:   # 83 of 8035
+            lines.append(line)
+        for line in lines[6037:6123]:   # 83 of 8035
+            lines.append(line)
+        for line in lines[6867:6954]:   # 83 of 8035
+            lines.append(line)
+        for line in lines[7692:7784]:   # 83 of 8035
+            lines.append(line)
 
        
 with open('data/IMG_left/driving_log.csv') as csvfile:
@@ -71,8 +83,8 @@ with open('data/IMG_left/driving_log.csv') as csvfile:
     for line in reader:
         line.extend([1])
         lines.append(line)
-    for i in range(160): 
-        for line in lines[2807:3190]:
+    for i in range(10): 
+        for line in lines[2799:3190]:               # 400 of 3285
             lines.append(line)
         
 with open('data/IMG_right/driving_log.csv') as csvfile:
@@ -81,7 +93,7 @@ with open('data/IMG_right/driving_log.csv') as csvfile:
     for line in reader:
         line.extend([2])
         lines.append(line)
-    for i in range(160):    
+    for i in range(10):    
         for line in lines[1963:2745]:
             lines.append(line)
         
@@ -90,7 +102,7 @@ with open('data/IMG_center/driving_log.csv') as csvfile:
     next(reader, None)
     for line in reader:
         line.extend([0])
-    for i in range(160):     
+    for i in range(10):     
         for line in lines[2320:2410]:
             lines.append(line)
         
@@ -121,7 +133,7 @@ train_samples, validation_samples= train_test_split(lines, test_size=0.15)
 
 
 # Set our batch size
-batch_size=32
+batch_size=64
 
 # compile and train the model using the generator function
 train_generator = generator(train_samples, batch_size=batch_size)
@@ -165,7 +177,7 @@ model.fit_generator(train_generator,
             steps_per_epoch=numpy.ceil(len(train_samples)/batch_size),
             validation_data=validation_generator,
             validation_steps=numpy.ceil(len(validation_samples)/batch_size),
-            epochs=1, verbose=1, callbacks=callbacks)
+            epochs=2, verbose=1, callbacks=callbacks)
 
 print("Saving model")
 model.save("model.h5")
