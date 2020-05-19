@@ -7,7 +7,7 @@ import numpy
 import sklearn
 import os.path
 # center, left (steer right), right (steer left) 
-correction_angles = [[0.0, 0.4, -0.4], [4.3, 4.4, 4.2], [-4.3, -4.2, -4.4]]
+correction_angles = [[0.0, 0.4, -0.4], [2.3, 2.4, 2.2], [-2.3, -2.2, -2.4]]
 
 
 def generator(samples, batch_size=32):
@@ -59,7 +59,7 @@ with open('data/driving_log.csv') as csvfile:
     for line in reader:
         line.extend([0])
         lines.append(line)
-    for _ in range(10):
+    for _ in range(5):
     #     # repeat for bridge
         for line in lines[1744:1826]:   # 82 of 8035
             lines.append(line)
@@ -80,31 +80,33 @@ with open('data/driving_log.csv') as csvfile:
 with open('data/IMG_left/driving_log.csv') as csvfile:
     reader = csv.reader(csvfile)
     # next(reader, None)
-    for line in reader:
-        line.extend([1])
-        lines.append(line)
-    for i in range(10): 
-        for line in lines[2799:3190]:               # 400 of 3285
+    for _ in range(4):
+        for line in reader:
+            line.extend([1])
             lines.append(line)
+        for i in range(6): 
+            for line in lines[2799:3190]:               # 400 of 3285
+                lines.append(line)
         
 with open('data/IMG_right/driving_log.csv') as csvfile:
     reader = csv.reader(csvfile)
     # next(reader, None)
-    for line in reader:
-        line.extend([2])
-        lines.append(line)
-    for i in range(10):    
-        for line in lines[1963:2745]:
+    for _ in range(4):
+        for line in reader:
+            line.extend([2])
             lines.append(line)
+        for i in range(6):    
+            for line in lines[1963:2745]:
+                lines.append(line)
         
-with open('data/IMG_center/driving_log.csv') as csvfile:
-    reader = csv.reader(csvfile)
-    next(reader, None)
-    for line in reader:
-        line.extend([0])
-    for i in range(10):     
-        for line in lines[2320:2410]:
-            lines.append(line)
+# with open('data/IMG_center/driving_log.csv') as csvfile:
+#     reader = csv.reader(csvfile)
+#     # next(reader, None)
+#     for line in reader:
+#         line.extend([0])
+#     for i in range(2):     
+#         for line in lines[2320:2410]:
+#             lines.append(line)
         
 from sklearn.model_selection import train_test_split
 train_samples, validation_samples= train_test_split(lines, test_size=0.15)
