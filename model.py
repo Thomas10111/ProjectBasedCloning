@@ -43,7 +43,7 @@ def generator(samples, batch_size=32):
 
                     else:
                         print("None: ", current_path)
-                        exit(-1)
+                        #exit(-1)
 
             X_train = numpy.array(images)
             y_train = numpy.array(measurements)
@@ -59,7 +59,7 @@ with open('data/driving_log.csv') as csvfile:
     for line in reader:
         line.extend([0])
         lines.append(line)
-    for _ in range(5):
+    for _ in range(1):
     #     # repeat for bridge
         for line in lines[1744:1826]:   # 82 of 8035
             lines.append(line)
@@ -80,24 +80,51 @@ with open('data/driving_log.csv') as csvfile:
 with open('data/IMG_left/driving_log.csv') as csvfile:
     reader = csv.reader(csvfile)
     # next(reader, None)
-    for _ in range(4):
-        for line in reader:
-            line.extend([1])
-            lines.append(line)
-        for i in range(6): 
-            for line in lines[2799:3190]:               # 400 of 3285
-                lines.append(line)
+    
+    lines_temp = []
+    for line in reader:
+        line.extend([1])
+        lines_temp.append(line)
+
+    # bridge
+    for line in lines_temp[2799:3190]:               # 400 of 3285
+        lines_temp.append(line)
         
+    lines.extend(lines_temp)
+
+    
 with open('data/IMG_right/driving_log.csv') as csvfile:
     reader = csv.reader(csvfile)
     # next(reader, None)
-    for _ in range(4):
+    
+    lines_temp = []
+    for line in reader:
+        line.extend([2])
+        lines_temp.append(line)   
+    
+    # bridge
+    for line in lines_temp[1963:2745]:
+        lines_temp.append(line)
+    
+    lines.extend(lines_temp)
+    
+
+for _ in range(4):
+    with open('data/IMG_bridge_left/driving_log.csv') as csvfile:
+        reader = csv.reader(csvfile)
+        # next(reader, None)
+
         for line in reader:
-            line.extend([2])
+            line.extend([1])
             lines.append(line)
-        for i in range(6):    
-            for line in lines[1963:2745]:
-                lines.append(line)
+        
+
+with open('data/IMG_bridge/driving_log.csv') as csvfile:
+    reader = csv.reader(csvfile)
+    # next(reader, None)
+    for line in reader:
+        line.extend([1])
+        lines.append(line)
         
 # with open('data/IMG_center/driving_log.csv') as csvfile:
 #     reader = csv.reader(csvfile)
@@ -111,27 +138,6 @@ with open('data/IMG_right/driving_log.csv') as csvfile:
 from sklearn.model_selection import train_test_split
 train_samples, validation_samples= train_test_split(lines, test_size=0.15)
  
-    
-# images =  []
-# measurements = []
-# for line in lines:
-#     for i, correction in enumerate([0.0, 0.3, -0.3]):
-#         filename= line[i].split('/')[-1]
-#         current_path='data/IMG/' + filename
-#         image = cv2.imread(current_path)
-#         if image is not None:
-#             #print("Found: ", current_path)
-#             images.append(image)
-#             measurements.append(float(line[3])+ correction)
-#             images.append(numpy.fliplr(image))
-#             measurements.append(-(float(line[3])+ correction))
-            
-#         else:
-#             print("None: ", current_path)
-#             exit(-1)
-#              
-# y_train = numpy.array(measurements)
-# X_train = numpy.stack(images)
 
 
 # Set our batch size
@@ -141,26 +147,21 @@ batch_size=64
 train_generator = generator(train_samples, batch_size=batch_size)
 validation_generator = generator(validation_samples, batch_size=batch_size)
 
-LOAD = True
+LOAD = False
 if LOAD:
     print("loading model")
     model = load_model('model.h5')
 else:
     model = Sequential()
     model.add(Lambda(lambda x: x / 255.0 - 0.5, input_shape=(160, 320, 3)))
-    # model.add(Dropout(0.1))
     model.add(Cropping2D(cropping=((70, 25), (0, 0))))
-    #model.add(Dropout(0.1))
     model.add(Conv2D(24, 5, 5, subsample=(2,2), activation="relu"))
-    #model.add(Dropout(0.1))
     model.add(Conv2D(36, 5, 5, subsample=(2,2), activation="relu"))
-    # model.add(Dropout(0.1))
     model.add(Conv2D(48, 5, 5, subsample=(2,2), activation="relu"))
-    # model.add(Dropout(0.15))
     model.add(Conv2D(64, 3, 3, activation="relu"))
-    # model.add(Dropout(0.15))
     model.add(Conv2D(64, 3, 3, activation="relu"))
     model.add(Flatten())
+    model.add(Dropout(0.10))
     model.add(Dense(100))
     model.add(Dense(50))
     model.add(Dense(10))
@@ -181,5 +182,5 @@ model.fit_generator(train_generator,
             validation_steps=numpy.ceil(len(validation_samples)/batch_size),
             epochs=2, verbose=1, callbacks=callbacks)
 
-print("Saving model")
 model.save("model.h5")
+print("Model saved")
