@@ -6,6 +6,7 @@ import cv2
 import numpy
 import sklearn
 import os.path
+
 # center, left (steer right), right (steer left) 
 correction_angles = [[0.0, 0.4, -0.4], [2.3, 2.4, 2.2], [-2.3, -2.2, -2.4]]
 
@@ -59,8 +60,9 @@ with open('data/driving_log.csv') as csvfile:
     for line in reader:
         line.extend([0])
         lines.append(line)
+        
+    # Add bridge images again
     for _ in range(1):
-    #     # repeat for bridge
         for line in lines[1744:1826]:   # 82 of 8035
             lines.append(line)
         for line in lines[2573:2657]:   # 84 of 8035
@@ -76,7 +78,7 @@ with open('data/driving_log.csv') as csvfile:
         for line in lines[7692:7784]:   # 83 of 8035
             lines.append(line)
 
-       
+# extra images, car driving on left side of the track           
 with open('data/IMG_left/driving_log.csv') as csvfile:
     reader = csv.reader(csvfile)
     # next(reader, None)
@@ -92,7 +94,7 @@ with open('data/IMG_left/driving_log.csv') as csvfile:
         
     lines.extend(lines_temp)
 
-    
+# extra images, car driving on right side of the track    
 with open('data/IMG_right/driving_log.csv') as csvfile:
     reader = csv.reader(csvfile)
     # next(reader, None)
@@ -108,7 +110,7 @@ with open('data/IMG_right/driving_log.csv') as csvfile:
     
     lines.extend(lines_temp)
     
-
+# extra images, car driving on left side of the bridge
 for _ in range(4):
     with open('data/IMG_bridge_left/driving_log.csv') as csvfile:
         reader = csv.reader(csvfile)
@@ -118,7 +120,7 @@ for _ in range(4):
             line.extend([1])
             lines.append(line)
         
-
+# extra images, car on left side of the bridge
 with open('data/IMG_bridge/driving_log.csv') as csvfile:
     reader = csv.reader(csvfile)
     # next(reader, None)
@@ -147,6 +149,8 @@ batch_size=64
 train_generator = generator(train_samples, batch_size=batch_size)
 validation_generator = generator(validation_samples, batch_size=batch_size)
 
+# LOAD = True, loads previous model.h5 file
+# LOAD = False, starts new model
 LOAD = False
 if LOAD:
     print("loading model")
@@ -170,9 +174,6 @@ else:
 model.summary()
 
 # Compile the model
-# model.compile(optimizer='Adam', loss='mse', metrics=['accuracy'])
-# model.fit(X_train, y_train, validation_split=0.2, shuffle=True)
-
 model.compile(loss='mse', optimizer='adam')
 callbacks = []
 callbacks.append(keras.callbacks.EarlyStopping(monitor='val_loss', min_delta=0, patience=0, verbose=0, mode='auto'))
