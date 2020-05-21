@@ -34,7 +34,7 @@ My project includes the following files:
 * model.py containing the script to create and train the model
 * drive.py for driving the car in autonomous mode
 * model.h5 containing a trained convolution neural network 
-* writeup_report.md or writeup_report.pdf summarizing the results
+* writeup.md summarizing the results
 * video_output.mp4 showing the car driving 1.5 rounds on track 1
 
 #### 2. Submission includes functional code
@@ -77,8 +77,9 @@ For details about how I created the training data, see the next section.
 #### 1. Solution Design Approach
 
 The overall strategy for deriving a model architecture was to use an existing architecture that has proven to work.
-I used the nvidia model because it was mentioned in class. After a while I realized that after two epochs the model is usally trained good enough. So, I only trained for two epochs and added the images to the training set where the car left the track or crashed.
-The bridge was the biggest problem.
+I used the nvidia model because it was mentioned in class. After a while I realized that after two epochs the model is usually trained good enough and further training did not improve driving behavior.
+So, I only trained for two epochs and added the images to the training set where the car left the track or crashed.
+The bridge was the biggest challenge.
 The final step was to run the simulator to see how well the car was driving around track one. 
 At the end of the process, the vehicle is able to drive autonomously around the track without leaving the road.
 
@@ -110,25 +111,25 @@ Non-trainable params: 0
 
 To capture good driving behavior, I used the provided dataset. Here is an example image of center lane driving:
 
-![alt text][image2]
+<img src="images_writeup/center_2016_12_01_13_31_13_177.jpg" alt="Visualization dataset"  width="300">
+<img src="images_writeup/center_2016_12_01_13_32_49_615.jpg" alt="Visualization dataset"  width="300">
+
 
 I then recorded the vehicle driving the left side and right sides of the road. Instead of doing recovery driving I added or subtracted higher steering wheel angles to these images:
 
-![alt text][image3]
-![alt text][image4]
-![alt text][image5]
+<img src="images_writeup/center_2020_04_30_20_31_41_705.jpg" alt="left"  width="300">
+<img src="images_writeup/center_2020_04_30_20_46_30_964.jpg" alt="right"  width="300">
+<img src="images_writeup/center_2020_05_20_04_28_38_415.jpg" alt="bridge left"  width="300">
 
-The most critical part was the bridge, so I pesented the bridge images several times to the network. Furthermore I recorded images while the car was on the bridge turned slightly to the left.
+The most challenging part was the bridge, so I presented the bridge images several times to the network. Furthermore I recorded images while the car was on the bridge turned slightly to the left.
 
+<img src="images_writeup/center_2020_05_20_04_28_22_768.jpg" alt="Visualization dataset"  width="300">
 
-To augment the data set, I also flipped images:
-
-![alt text][image6]
-![alt text][image7]
+To augment the data set, I also flipped images (see model.py, line 42).
 
 
-After the collection process, I had 15883 number of data points.
+After the collection process, I had 15883 (without flipping) number of data points.
 
-I finally randomly shuffled the data set and put 15% of the data into a validation set. 
+I finally randomly shuffled the data set and put 15% (model.py, line 141) of the data into a validation set. 
 
 I used this training data for training the model. The validation set helped determine if the model was over or under fitting. Two epochs were sufficient to learn a good driving behavior. I used an adam optimizer so that manually training the learning rate wasn't necessary.
