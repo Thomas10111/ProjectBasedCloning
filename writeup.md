@@ -87,7 +87,7 @@ At the end of the process, the vehicle is able to drive autonomously around the 
 The final model architecture (model.py lines 159-172) is shown in the table below.
 
 |Layer (type)       		|          Output Shape |     Param #|   
-|-----------------------------------------------------------------
+|---------------------------|---------------------------|---------|
 |lambda_1 (Lambda)          |  (None, 160, 320, 3)      | 0         |
 |cropping2d_1 (Cropping2D)  |  (None, 65, 320, 3)       | 0        | 
 |conv2d_1 (Conv2D)          |  (None, 31, 158, 24)      | 1824     | 
