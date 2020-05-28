@@ -6,9 +6,10 @@ import cv2
 import numpy
 import sklearn
 import os.path
+import random
 
 # center, left (steer right), right (steer left) 
-correction_angles = [[0.0, 0.4, -0.4], [2.3, 2.4, 2.2], [-2.3, -2.2, -2.4]]
+correction_angles = [[0.0, 0.4, -0.4], [3.5, 3.6, 3.4], [-3.5, -3.4, -3.6]]
 
 
 def generator(samples, batch_size=32):
@@ -38,9 +39,23 @@ def generator(samples, batch_size=32):
                         steering_correction = float(batch_sample[3])+ correction
                         measurements.append(steering_correction)
                         #print("current_path: ", current_path, "      steering_correction: ", steering_correction)
-                                                
+
                         images.append(numpy.fliplr(image))
                         measurements.append(-steering_correction)
+                        
+                        rows,cols, depth = image.shape
+                        x = random.randint(-20, 20)
+                        M = numpy.float32([[1, 0, x],[0, 1, 0]])
+                        dst = cv2.warpAffine(image, M, (cols,rows))
+                        images.append(dst)
+                        steering_correction = float(batch_sample[3])+ correction
+                        measurements.append(steering_correction)
+                        
+                        images.append(numpy.fliplr(dst))
+                        measurements.append(-steering_correction)
+                        
+                        
+                        
 
                     else:
                         print("None: ", current_path)
@@ -143,7 +158,7 @@ train_samples, validation_samples= train_test_split(lines, test_size=0.15)
 
 
 # Set our batch size
-batch_size=64
+batch_size=128
 
 # compile and train the model using the generator function
 train_generator = generator(train_samples, batch_size=batch_size)
@@ -151,14 +166,14 @@ validation_generator = generator(validation_samples, batch_size=batch_size)
 
 # LOAD = True, loads previous model.h5 file
 # LOAD = False, starts new model
-LOAD = False
+LOAD = True
 if LOAD:
     print("loading model")
     model = load_model('model.h5')
 else:
     model = Sequential()
     model.add(Lambda(lambda x: x / 255.0 - 0.5, input_shape=(160, 320, 3)))
-    model.add(Cropping2D(cropping=((70, 25), (0, 0))))
+    model.add(Cropping2D(cropping=((70, 25), (20, 20))))
     model.add(Conv2D(24, 5, 5, subsample=(2,2), activation="relu"))
     model.add(Conv2D(36, 5, 5, subsample=(2,2), activation="relu"))
     model.add(Conv2D(48, 5, 5, subsample=(2,2), activation="relu"))
@@ -167,7 +182,9 @@ else:
     model.add(Flatten())
     model.add(Dropout(0.10))
     model.add(Dense(100))
+    model.add(Dropout(0.10))
     model.add(Dense(50))
+    model.add(Dropout(0.10))
     model.add(Dense(10))
     model.add(Dense(1))
 
@@ -181,7 +198,7 @@ model.fit_generator(train_generator,
             steps_per_epoch=numpy.ceil(len(train_samples)/batch_size),
             validation_data=validation_generator,
             validation_steps=numpy.ceil(len(validation_samples)/batch_size),
-            epochs=2, verbose=1, callbacks=callbacks)
+            epochs=1, verbose=1, callbacks=callbacks)
 
 model.save("model.h5")
 print("Model saved")
