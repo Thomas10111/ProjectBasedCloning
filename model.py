@@ -7,15 +7,25 @@ import numpy
 import sklearn
 import os.path
 import random
+from matplotlib import pyplot as plt
+import math
+
 
 # center, left (steer right), right (steer left) 
-correction_angles = [[0.0, 0.4, -0.4], [3.5, 3.6, 3.4], [-3.5, -3.4, -3.6]]
+correction_angles = [[0.0, 0.2, -0.2], [0.8, 0.9, 0.7], [-0.8, -0.7, -0.9]]
 
+def calc_correction(angle):
+    if angle > 1.0:
+        return 1.0
+    if angle < -1.0:
+        return -1.0
+    return angle
 
 def generator(samples, batch_size=32):
     num_samples = len(samples)
     print("num_samples: ", num_samples)
-    while 1: # Loop forever so the generator never terminates
+#    while 1: # Loop forever so the generator never terminates
+    for i in range(1):
         samples = sklearn.utils.shuffle(samples)
         for offset in range(0, num_samples, batch_size):
             batch_samples = samples[offset:offset+batch_size]
@@ -36,7 +46,7 @@ def generator(samples, batch_size=32):
                     if image is not None:
                         #print("Found: ", current_path)
                         images.append(image)
-                        steering_correction = float(batch_sample[3])+ correction
+                        steering_correction = calc_correction(float(batch_sample[3])+ correction)
                         measurements.append(steering_correction)
                         #print("current_path: ", current_path, "      steering_correction: ", steering_correction)
 
@@ -48,33 +58,31 @@ def generator(samples, batch_size=32):
                         M = numpy.float32([[1, 0, x],[0, 1, 0]])
                         dst = cv2.warpAffine(image, M, (cols,rows))
                         images.append(dst)
-                        steering_correction = float(batch_sample[3])+ correction
+                        steering_correction = calc_correction(float(batch_sample[3])+ correction)
                         measurements.append(steering_correction)
                         
                         images.append(numpy.fliplr(dst))
-                        measurements.append(-steering_correction)
-                        
-                        
-                        
+                        measurements.append(-steering_correction)                                         
 
                     else:
                         print("None: ", current_path)
                         #exit(-1)
-
+            
             X_train = numpy.array(images)
             y_train = numpy.array(measurements)
             yield sklearn.utils.shuffle(X_train, y_train)
-
-
+            
 
 lines = []
 
 with open('data/driving_log.csv') as csvfile:
     reader = csv.reader(csvfile)
     next(reader, None)
-    for line in reader:
+    
+    for i, line in enumerate(reader):
         line.extend([0])
         lines.append(line)
+        if i > 1200: break
         
     # Add bridge images again
     for _ in range(1):
@@ -151,14 +159,34 @@ with open('data/IMG_bridge/driving_log.csv') as csvfile:
 #     for i in range(2):     
 #         for line in lines[2320:2410]:
 #             lines.append(line)
-        
+
+
+# for i in generator(lines):
+#     steering_angles.extend(i[1])
+
+
+
+# Plot histogram
+steering_angles = []
+for b in generator(lines):
+    steering_angles.extend(b[1])
+#print(steering_angles)
+
+#plt.ioff()
+plt.hist(steering_angles, bins=40)
+plt.savefig("hist.png")
+plt.show()
+exit(0)
+
+
+
 from sklearn.model_selection import train_test_split
 train_samples, validation_samples= train_test_split(lines, test_size=0.15)
  
 
-
 # Set our batch size
-batch_size=128
+batch_size=64
+
 
 # compile and train the model using the generator function
 train_generator = generator(train_samples, batch_size=batch_size)
@@ -166,7 +194,7 @@ validation_generator = generator(validation_samples, batch_size=batch_size)
 
 # LOAD = True, loads previous model.h5 file
 # LOAD = False, starts new model
-LOAD = True
+LOAD = False
 if LOAD:
     print("loading model")
     model = load_model('model.h5')
@@ -180,11 +208,11 @@ else:
     model.add(Conv2D(64, 3, 3, activation="relu"))
     model.add(Conv2D(64, 3, 3, activation="relu"))
     model.add(Flatten())
-    model.add(Dropout(0.10))
+    model.add(Dropout(0.30))
     model.add(Dense(100))
-    model.add(Dropout(0.10))
+    model.add(Dropout(0.30))
     model.add(Dense(50))
-    model.add(Dropout(0.10))
+    model.add(Dropout(0.30))
     model.add(Dense(10))
     model.add(Dense(1))
 
@@ -198,7 +226,7 @@ model.fit_generator(train_generator,
             steps_per_epoch=numpy.ceil(len(train_samples)/batch_size),
             validation_data=validation_generator,
             validation_steps=numpy.ceil(len(validation_samples)/batch_size),
-            epochs=1, verbose=1, callbacks=callbacks)
+            epochs=3, verbose=1, callbacks=callbacks)
 
 model.save("model.h5")
 print("Model saved")
