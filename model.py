@@ -25,8 +25,8 @@ def calc_correction(angle):
 def generator(samples, batch_size=32):
     num_samples = len(samples)
     print("num_samples: ", num_samples)
-#    while 1: # Loop forever so the generator never terminates
-    for i in range(1):
+    while 1: # Loop forever so the generator never terminates
+#    for i in range(1):
         samples = sklearn.utils.shuffle(samples)
         for offset in range(0, num_samples, batch_size):
             batch_samples = samples[offset:offset+batch_size]
@@ -37,15 +37,15 @@ def generator(samples, batch_size=32):
             for batch_sample in batch_samples:
                 for i, correction in enumerate(correction_angles[batch_sample[7]]):
                     filename= batch_sample[i].split('/')[-1]
-                    current_path=pathlib.Path('data/IMG/' + filename)
+                    current_path=str(pathlib.Path('data/IMG/' + filename))
                     
                     # In the recorded images the path is absolute
                     if not os.path.exists(current_path):
                         #current_path = batch_sample[i]
                         p = pathlib.Path(batch_sample[1])
-                        current_path = pathlib.Path(*p.parts[4:])
+                        current_path = str(pathlib.Path(*p.parts[4:]))
 
-                    image = cv2.imread(str(current_path))
+                    image = cv2.imread(current_path)
                     if image is not None:
                         #print("Found: ", current_path)
                         images.append(image)
@@ -257,7 +257,7 @@ model.fit_generator(train_generator,
             steps_per_epoch=numpy.ceil(len(train_samples)/batch_size),
             validation_data=validation_generator,
             validation_steps=numpy.ceil(len(validation_samples)/batch_size),
-            epochs=3, verbose=1, callbacks=callbacks)
+            epochs=2, verbose=1, callbacks=callbacks)
 
 model.save("model.h5")
 print("Model saved")
