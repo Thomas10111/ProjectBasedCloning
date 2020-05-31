@@ -1,6 +1,6 @@
-# from keras.layers import Cropping2D, Conv2D, Dense, GlobalAveragePooling2D, Activation, Flatten, Lambda, Dropout
-# from keras.models import Sequential, load_model
-# import keras
+from keras.layers import Cropping2D, Conv2D, Dense, GlobalAveragePooling2D, Activation, Flatten, Lambda, Dropout
+from keras.models import Sequential, load_model
+import keras
 import csv
 import cv2
 import numpy
