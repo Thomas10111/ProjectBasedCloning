@@ -1,6 +1,6 @@
-from keras.layers import Cropping2D, Conv2D, Dense, GlobalAveragePooling2D, Activation, Flatten, Lambda, Dropout
-from keras.models import Sequential, load_model
-import keras
+# from keras.layers import Cropping2D, Conv2D, Dense, GlobalAveragePooling2D, Activation, Flatten, Lambda, Dropout
+# from keras.models import Sequential, load_model
+# import keras
 import csv
 import cv2
 import numpy
@@ -9,6 +9,7 @@ import os.path
 import random
 from matplotlib import pyplot as plt
 import math
+import pathlib
 
 
 # center, left (steer right), right (steer left) 
@@ -36,13 +37,15 @@ def generator(samples, batch_size=32):
             for batch_sample in batch_samples:
                 for i, correction in enumerate(correction_angles[batch_sample[7]]):
                     filename= batch_sample[i].split('/')[-1]
-                    current_path='data/IMG/' + filename
+                    current_path=pathlib.Path('data/IMG/' + filename)
                     
                     # In the recorded images the path is absolute
                     if not os.path.exists(current_path):
-                        current_path = batch_sample[i] 
-                    
-                    image = cv2.imread(current_path)
+                        #current_path = batch_sample[i]
+                        p = pathlib.Path(batch_sample[1])
+                        current_path = pathlib.Path(*p.parts[4:])
+
+                    image = cv2.imread(str(current_path))
                     if image is not None:
                         #print("Found: ", current_path)
                         images.append(image)
@@ -72,8 +75,8 @@ def generator(samples, batch_size=32):
             y_train = numpy.array(measurements)
             yield sklearn.utils.shuffle(X_train, y_train)
             
-
 lines = []
+all_img_lines = []
 
 with open('data/driving_log.csv') as csvfile:
     reader = csv.reader(csvfile)
@@ -81,27 +84,46 @@ with open('data/driving_log.csv') as csvfile:
     
     for i, line in enumerate(reader):
         line.extend([0])
+        all_img_lines.append(line)
+        #if i > 1200: break
+
+    len_all_img_lines = len(all_img_lines)  # 8035
+
+    # append 3 rounds of track
+    for line in all_img_lines[0:3400]:   # 82 of 8035
         lines.append(line)
-        if i > 1200: break
         
     # Add bridge images again
     for _ in range(1):
-        for line in lines[1744:1826]:   # 82 of 8035
+        for line in all_img_lines[1744:1826]:   # 82 of 8035
             lines.append(line)
-        for line in lines[2573:2657]:   # 84 of 8035
+        for line in all_img_lines[2573:2657]:   # 84 of 8035
             lines.append(line)
-        for line in lines[3408:3517]:   # 109 of 8035
+        for line in all_img_lines[3408:3517]:   # 109 of 8035
             lines.append(line)
-        for line in lines[5208:5291]:   # 83 of 8035
+        for line in all_img_lines[5208:5291]:   # 83 of 8035
             lines.append(line)
-        for line in lines[6037:6123]:   # 83 of 8035
+        for line in all_img_lines[6037:6123]:   # 83 of 8035
             lines.append(line)
-        for line in lines[6867:6954]:   # 83 of 8035
-            lines.append(line)
-        for line in lines[7692:7784]:   # 83 of 8035
-            lines.append(line)
+        # for line in all_img_lines[6867:6954]:   # 83 of 8035
+        #     lines.append(line)
+        # for line in all_img_lines[7692:7784]:   # 83 of 8035
+        #     lines.append(line)
 
-# extra images, car driving on left side of the track           
+    # Add turns
+    #     for line in all_img_lines[633:683]:   # 83 of 8035
+    #         lines.append(line)
+    #     for line in all_img_lines[746:794]:   # 83 of 8035
+    #         lines.append(line)
+
+        for line in all_img_lines:   # 83 of 8035
+            if abs(float(line[3])) > 0.25 and abs(float(line[3])) < 0.6:
+                lines.append(line)
+
+
+    lines_len = len(lines)  # 8659
+
+# extra images, car driving on left side of the track
 with open('data/IMG_left/driving_log.csv') as csvfile:
     reader = csv.reader(csvfile)
     # next(reader, None)
@@ -117,31 +139,38 @@ with open('data/IMG_left/driving_log.csv') as csvfile:
         
     lines.extend(lines_temp)
 
-# extra images, car driving on right side of the track    
-with open('data/IMG_right/driving_log.csv') as csvfile:
-    reader = csv.reader(csvfile)
-    # next(reader, None)
-    
-    lines_temp = []
-    for line in reader:
-        line.extend([2])
-        lines_temp.append(line)   
-    
-    # bridge
-    for line in lines_temp[1963:2745]:
-        lines_temp.append(line)
-    
-    lines.extend(lines_temp)
-    
-# extra images, car driving on left side of the bridge
-for _ in range(4):
-    with open('data/IMG_bridge_left/driving_log.csv') as csvfile:
-        reader = csv.reader(csvfile)
-        # next(reader, None)
+    lines_len = len(lines)      # 12335
 
-        for line in reader:
-            line.extend([1])
-            lines.append(line)
+
+# extra images, car driving on right side of the track    
+# with open('data/IMG_right/driving_log.csv') as csvfile:
+#     reader = csv.reader(csvfile)
+#     # next(reader, None)
+#
+#     lines_temp = []
+#     for line in reader:
+#         line.extend([2])
+#         lines_temp.append(line)
+#
+#     # bridge
+#     for line in lines_temp[1963:2745]:
+#         lines_temp.append(line)
+#
+#     lines.extend(lines_temp)
+#
+#     lines_len = len(lines)  # 16423
+
+# extra images, car driving on left side of the bridge
+# for _ in range(4):
+#     with open('data/IMG_bridge_left/driving_log.csv') as csvfile:
+#         reader = csv.reader(csvfile)
+#         # next(reader, None)
+#
+#         for line in reader:
+#             line.extend([1])
+#             lines.append(line)
+#
+#     lines_len = len(lines)  # 18543
         
 # extra images, car on left side of the bridge
 with open('data/IMG_bridge/driving_log.csv') as csvfile:
@@ -150,7 +179,9 @@ with open('data/IMG_bridge/driving_log.csv') as csvfile:
     for line in reader:
         line.extend([1])
         lines.append(line)
-        
+
+    lines_len = len(lines)  # 18687
+
 # with open('data/IMG_center/driving_log.csv') as csvfile:
 #     reader = csv.reader(csvfile)
 #     # next(reader, None)
@@ -165,28 +196,28 @@ with open('data/IMG_bridge/driving_log.csv') as csvfile:
 #     steering_angles.extend(i[1])
 
 
+PLOT_HIST = False
+if PLOT_HIST:
+    # Plot histogram
+    steering_angles = []
+    for b in generator(lines):
+        steering_angles.extend(b[1])
 
-# Plot histogram
-steering_angles = []
-for b in generator(lines):
-    steering_angles.extend(b[1])
-#print(steering_angles)
+    len_steering_angles = len(steering_angles)
 
-#plt.ioff()
-plt.hist(steering_angles, bins=40)
-plt.savefig("hist.png")
-plt.show()
-exit(0)
+    #plt.ioff()
+    plt.hist(steering_angles, bins=40)
+    plt.savefig("hist.png")
+    plt.show()
+    exit(0)
 
 
 
 from sklearn.model_selection import train_test_split
 train_samples, validation_samples= train_test_split(lines, test_size=0.15)
- 
 
 # Set our batch size
 batch_size=64
-
 
 # compile and train the model using the generator function
 train_generator = generator(train_samples, batch_size=batch_size)
