@@ -1,32 +1,32 @@
-# from keras.layers import Cropping2D, Conv2D, Dense, GlobalAveragePooling2D, Activation, Flatten, Lambda, Dropout
-# from keras.models import Sequential, load_model
-# import keras
+from keras.layers import Cropping2D, Conv2D, Dense, GlobalAveragePooling2D, Activation, Flatten, Lambda, Dropout
+from keras.models import Sequential, load_model
+import keras
 import csv
 import cv2
 import numpy
 import sklearn
 import os.path
 import random
-from matplotlib import pyplot as plt
+#from matplotlib import pyplot as plt
 import math
 import pathlib
 
 
 # center, left (steer right), right (steer left) 
-correction_angles = [[0.0, 0.2, -0.2], [0.8, 0.9, 0.7], [-0.8, -0.7, -0.9]]
+correction_angles = [[0.0, 0.2, -0.2], [0.3, 0.4, 0.2], [-0.3, -0.2, -0.4]]
 
-def calc_correction(angle):
-    if angle > 1.0:
-        return 1.0
-    if angle < -1.0:
-        return -1.0
-    return angle
+# def calc_correction(angle):
+#     if angle > 1.0:
+#         return 1.0
+#     if angle < -1.0:
+#         return -1.0
+#     return angle
 
 def generator(samples, batch_size=32):
     num_samples = len(samples)
     print("num_samples: ", num_samples)
-#    while 1: # Loop forever so the generator never terminates
-    for i in range(1):
+    while 1: # Loop forever so the generator never terminates
+#    for i in range(1):
         samples = sklearn.utils.shuffle(samples)
         for offset in range(0, num_samples, batch_size):
             batch_samples = samples[offset:offset+batch_size]
@@ -48,8 +48,11 @@ def generator(samples, batch_size=32):
                     image = cv2.imread(current_path)
                     if image is not None:
                         #print("Found: ", current_path)
+               
                         images.append(image)
-                        steering_correction = calc_correction(float(batch_sample[3])+ correction)
+                        #steering_correction = calc_correction(float(batch_sample[3])+ correction)
+                        steering_correction = float(batch_sample[3])+ correction
+#                         print(current_path, "  steering_correction: ", steering_correction)
                         measurements.append(steering_correction)
                         #print("current_path: ", current_path, "      steering_correction: ", steering_correction)
 
@@ -57,11 +60,12 @@ def generator(samples, batch_size=32):
                         measurements.append(-steering_correction)
                         
                         rows,cols, depth = image.shape
-                        x = random.randint(-20, 20)
+                        x = random.randint(-10, 10)
                         M = numpy.float32([[1, 0, x],[0, 1, 0]])
                         dst = cv2.warpAffine(image, M, (cols,rows))
                         images.append(dst)
-                        steering_correction = calc_correction(float(batch_sample[3])+ correction)
+                        #steering_correction = calc_correction(float(batch_sample[3])+ correction)
+                        steering_correction = float(batch_sample[3])+ correction
                         measurements.append(steering_correction)
                         
                         images.append(numpy.fliplr(dst))
@@ -93,7 +97,7 @@ with open('data/driving_log.csv') as csvfile:
     for line in all_img_lines[0:1700]:   # 82 of 8035
         lines.append(line)
         
-    # Add bridge images again
+    # Add bridge images againcd 
     for _ in range(1):
         for line in all_img_lines[1744:1826]:   # 82 of 8035
             lines.append(line)
@@ -118,7 +122,7 @@ with open('data/driving_log.csv') as csvfile:
 
     for _ in range(3):
         for line in all_img_lines:
-            if abs(float(line[3])) > 0.25 and abs(float(line[3])) < 0.6:
+            if abs(float(line[3])) > 0.25 and abs(float(line[3])) < 1.0:
                 lines.append(line)
 
 
@@ -144,22 +148,22 @@ with open('data/IMG_left/driving_log.csv') as csvfile:
 
 
 # extra images, car driving on right side of the track    
-# with open('data/IMG_right/driving_log.csv') as csvfile:
-#     reader = csv.reader(csvfile)
-#     # next(reader, None)
-#
-#     lines_temp = []
-#     for line in reader:
-#         line.extend([2])
-#         lines_temp.append(line)
-#
-#     # bridge
-#     for line in lines_temp[1963:2745]:
-#         lines_temp.append(line)
-#
-#     lines.extend(lines_temp)
-#
-#     lines_len = len(lines)  # 16423
+with open('data/IMG_right/driving_log.csv') as csvfile:
+    reader = csv.reader(csvfile)
+    # next(reader, None)
+
+    lines_temp = []
+    for line in reader:
+        line.extend([2])
+        lines_temp.append(line)
+
+    # bridge
+    for line in lines_temp[1963:2745]:
+        lines_temp.append(line)
+
+    lines.extend(lines_temp)
+
+    lines_len = len(lines)  # 16423
 
 # extra images, car driving on left side of the bridge
 # for _ in range(4):
@@ -197,7 +201,7 @@ with open('data/IMG_bridge/driving_log.csv') as csvfile:
 #     steering_angles.extend(i[1])
 
 
-PLOT_HIST = True
+PLOT_HIST = False
 if PLOT_HIST:
     # Plot histogram
     steering_angles = []
@@ -218,7 +222,7 @@ from sklearn.model_selection import train_test_split
 train_samples, validation_samples= train_test_split(lines, test_size=0.15)
 
 # Set our batch size
-batch_size=64
+batch_size=32
 
 # compile and train the model using the generator function
 train_generator = generator(train_samples, batch_size=batch_size)
@@ -258,7 +262,7 @@ model.fit_generator(train_generator,
             steps_per_epoch=numpy.ceil(len(train_samples)/batch_size),
             validation_data=validation_generator,
             validation_steps=numpy.ceil(len(validation_samples)/batch_size),
-            epochs=2, verbose=1, callbacks=callbacks)
+            epochs=1, verbose=1, callbacks=callbacks)
 
 model.save("model.h5")
 print("Model saved")
