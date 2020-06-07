@@ -1,6 +1,6 @@
-from keras.layers import Cropping2D, Conv2D, Dense, GlobalAveragePooling2D, Activation, Flatten, Lambda, Dropout
-from keras.models import Sequential, load_model
-import keras
+# from keras.layers import Cropping2D, Conv2D, Dense, GlobalAveragePooling2D, Activation, Flatten, Lambda, Dropout
+# from keras.models import Sequential, load_model
+# import keras
 import csv
 import cv2
 import numpy
@@ -22,62 +22,69 @@ correction_angles = [[0.0, 0.2, -0.2], [0.3, 0.4, 0.2], [-0.3, -0.2, -0.4]]
 #         return -1.0
 #     return angle
 
-def generator(samples, batch_size=32):
+def generator(x,y, batch_size=32):
+    num_samples = len(x)
+
+    for i in range(1):
+#    while 1: # Loop forever so the generator never terminates
+        for offset in range(0, num_samples, batch_size):
+            x_batch = x[offset:offset+batch_size]
+            y_batch = y[offset:offset + batch_size]
+
+            yield x_batch, y_batch
+
+
+def augument_images(samples):
     num_samples = len(samples)
     print("num_samples: ", num_samples)
-    while 1: # Loop forever so the generator never terminates
-#    for i in range(1):
-        samples = sklearn.utils.shuffle(samples)
-        for offset in range(0, num_samples, batch_size):
-            batch_samples = samples[offset:offset+batch_size]
 
-            images = []
-            measurements = []
-            
-            for batch_sample in batch_samples:
-                for i, correction in enumerate(correction_angles[batch_sample[7]]):
-                    filename= batch_sample[i].split('/')[-1]
-                    current_path=str(pathlib.Path('data/IMG/' + filename))
-                    
-                    # In the recorded images the path is absolute
-                    if not os.path.exists(current_path):
-                        #current_path = batch_sample[i]
-                        p = pathlib.Path(batch_sample[1])
-                        current_path = str(pathlib.Path(*p.parts[4:]))
+    images = []
+    measurements = []
 
-                    image = cv2.imread(current_path)
-                    if image is not None:
-                        #print("Found: ", current_path)
-               
-                        images.append(image)
-                        #steering_correction = calc_correction(float(batch_sample[3])+ correction)
-                        steering_correction = float(batch_sample[3])+ correction
-#                         print(current_path, "  steering_correction: ", steering_correction)
-                        measurements.append(steering_correction)
-                        #print("current_path: ", current_path, "      steering_correction: ", steering_correction)
+    for batch_sample in samples:
+        for i, correction in enumerate(correction_angles[batch_sample[7]]):
+            filename = batch_sample[i].split('/')[-1]
+            current_path = str(pathlib.Path('data/IMG/' + filename))
 
-                        images.append(numpy.fliplr(image))
-                        measurements.append(-steering_correction)
-                        
-                        rows,cols, depth = image.shape
-                        x = random.randint(-10, 10)
-                        M = numpy.float32([[1, 0, x],[0, 1, 0]])
-                        dst = cv2.warpAffine(image, M, (cols,rows))
-                        images.append(dst)
-                        #steering_correction = calc_correction(float(batch_sample[3])+ correction)
-                        steering_correction = float(batch_sample[3])+ correction
-                        measurements.append(steering_correction)
-                        
-                        images.append(numpy.fliplr(dst))
-                        measurements.append(-steering_correction)                                         
+            # In the recorded images the path is absolute
+            if not os.path.exists(current_path):
+                # current_path = batch_sample[i]
+                p = pathlib.Path(batch_sample[1])
+                current_path = str(pathlib.Path(*p.parts[4:]))
 
-                    else:
-                        print("None: ", current_path)
-                        #exit(-1)
-            
-            X_train = numpy.array(images)
-            y_train = numpy.array(measurements)
-            yield sklearn.utils.shuffle(X_train, y_train)
+            image = cv2.imread(current_path)
+            if image is not None:
+                # print("Found: ", current_path)
+
+                images.append(image)
+                # steering_correction = calc_correction(float(batch_sample[3])+ correction)
+                steering_correction = float(batch_sample[3]) + correction
+                #                         print(current_path, "  steering_correction: ", steering_correction)
+                measurements.append(steering_correction)
+                # print("current_path: ", current_path, "      steering_correction: ", steering_correction)
+
+                images.append(numpy.fliplr(image))
+                measurements.append(-steering_correction)
+
+                rows, cols, depth = image.shape
+                x = random.randint(-10, 10)
+                M = numpy.float32([[1, 0, x], [0, 1, 0]])
+                dst = cv2.warpAffine(image, M, (cols, rows))
+                images.append(dst)
+                # steering_correction = calc_correction(float(batch_sample[3])+ correction)
+                steering_correction = float(batch_sample[3]) + correction
+                measurements.append(steering_correction)
+
+                images.append(numpy.fliplr(dst))
+                measurements.append(-steering_correction)
+
+            else:
+                print("None: ", current_path)
+                # exit(-1)
+
+    X_train = numpy.array(images)
+    y_train = numpy.array(measurements)
+    return sklearn.utils.shuffle(X_train, y_train)
             
 lines = []
 all_img_lines = []
@@ -129,41 +136,41 @@ with open('data/driving_log.csv') as csvfile:
     lines_len = len(lines)  # 8659
 
 # extra images, car driving on left side of the track
-with open('data/IMG_left/driving_log.csv') as csvfile:
-    reader = csv.reader(csvfile)
-    # next(reader, None)
-    
-    lines_temp = []
-    for line in reader:
-        line.extend([1])
-        lines_temp.append(line)
-
-    # bridge
-    for line in lines_temp[2799:3190]:               # 400 of 3285
-        lines_temp.append(line)
-        
-    lines.extend(lines_temp)
-
-    lines_len = len(lines)      # 12335
-
-
-# extra images, car driving on right side of the track    
-with open('data/IMG_right/driving_log.csv') as csvfile:
-    reader = csv.reader(csvfile)
-    # next(reader, None)
-
-    lines_temp = []
-    for line in reader:
-        line.extend([2])
-        lines_temp.append(line)
-
-    # bridge
-    for line in lines_temp[1963:2745]:
-        lines_temp.append(line)
-
-    lines.extend(lines_temp)
-
-    lines_len = len(lines)  # 16423
+# with open('data/IMG_left/driving_log.csv') as csvfile:
+#     reader = csv.reader(csvfile)
+#     # next(reader, None)
+#
+#     lines_temp = []
+#     for line in reader:
+#         line.extend([1])
+#         lines_temp.append(line)
+#
+#     # bridge
+#     for line in lines_temp[2799:3190]:               # 400 of 3285
+#         lines_temp.append(line)
+#
+#     lines.extend(lines_temp)
+#
+#     lines_len = len(lines)      # 12335
+#
+#
+# # extra images, car driving on right side of the track
+# with open('data/IMG_right/driving_log.csv') as csvfile:
+#     reader = csv.reader(csvfile)
+#     # next(reader, None)
+#
+#     lines_temp = []
+#     for line in reader:
+#         line.extend([2])
+#         lines_temp.append(line)
+#
+#     # bridge
+#     for line in lines_temp[1963:2745]:
+#         lines_temp.append(line)
+#
+#     lines.extend(lines_temp)
+#
+#     lines_len = len(lines)  # 16423
 
 # extra images, car driving on left side of the bridge
 # for _ in range(4):
@@ -225,8 +232,11 @@ train_samples, validation_samples= train_test_split(lines, test_size=0.15)
 batch_size=32
 
 # compile and train the model using the generator function
-train_generator = generator(train_samples, batch_size=batch_size)
-validation_generator = generator(validation_samples, batch_size=batch_size)
+train_generator = generator(augument_images(lines), batch_size=batch_size)
+validation_generator = generator(augument_images(lines), batch_size=batch_size)
+
+for i in range(0,10):
+    print(train_generator)
 
 # LOAD = True, loads previous model.h5 file
 # LOAD = False, starts new model
