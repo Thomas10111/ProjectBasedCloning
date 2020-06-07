@@ -89,88 +89,89 @@ def augument_images(samples):
 lines = []
 all_img_lines = []
 
-with open('data/driving_log.csv') as csvfile:
-    reader = csv.reader(csvfile)
-    next(reader, None)
-    
-    for i, line in enumerate(reader):
-        line.extend([0])
-        all_img_lines.append(line)
-        #if i > 1200: break
+if True:
+    with open('data/driving_log.csv') as csvfile:
+        reader = csv.reader(csvfile)
+        next(reader, None)
 
-    len_all_img_lines = len(all_img_lines)  # 8035
+        for i, line in enumerate(reader):
+            line.extend([0])
+            all_img_lines.append(line)
+            #if i > 1200: break
 
-    # append 3 rounds of track
-    for line in all_img_lines[0:1700]:   # 82 of 8035
-        lines.append(line)
-        
-    # Add bridge images againcd 
-    for _ in range(1):
-        for line in all_img_lines[1744:1826]:   # 82 of 8035
+        len_all_img_lines = len(all_img_lines)  # 8035
+
+        # append 3 rounds of track
+        for line in all_img_lines[0:1700]:   # 82 of 8035
             lines.append(line)
-        for line in all_img_lines[2573:2657]:   # 84 of 8035
-            lines.append(line)
-        for line in all_img_lines[3408:3517]:   # 109 of 8035
-            lines.append(line)
-        # for line in all_img_lines[5208:5291]:   # 83 of 8035
-        #     lines.append(line)
-        # for line in all_img_lines[6037:6123]:   # 83 of 8035
-        #     lines.append(line)
-        # for line in all_img_lines[6867:6954]:   # 83 of 8035
-        #     lines.append(line)
-        # for line in all_img_lines[7692:7784]:   # 83 of 8035
-        #     lines.append(line)
 
-    # Add turns
-    #     for line in all_img_lines[633:683]:   # 83 of 8035
-    #         lines.append(line)
-    #     for line in all_img_lines[746:794]:   # 83 of 8035
-    #         lines.append(line)
-
-    for _ in range(3):
-        for line in all_img_lines:
-            if abs(float(line[3])) > 0.25 and abs(float(line[3])) < 1.0:
+        # Add bridge images againcd
+        for _ in range(1):
+            for line in all_img_lines[1744:1826]:   # 82 of 8035
                 lines.append(line)
+            for line in all_img_lines[2573:2657]:   # 84 of 8035
+                lines.append(line)
+            for line in all_img_lines[3408:3517]:   # 109 of 8035
+                lines.append(line)
+            # for line in all_img_lines[5208:5291]:   # 83 of 8035
+            #     lines.append(line)
+            # for line in all_img_lines[6037:6123]:   # 83 of 8035
+            #     lines.append(line)
+            # for line in all_img_lines[6867:6954]:   # 83 of 8035
+            #     lines.append(line)
+            # for line in all_img_lines[7692:7784]:   # 83 of 8035
+            #     lines.append(line)
+
+        # Add turns
+        #     for line in all_img_lines[633:683]:   # 83 of 8035
+        #         lines.append(line)
+        #     for line in all_img_lines[746:794]:   # 83 of 8035
+        #         lines.append(line)
+
+        for _ in range(3):
+            for line in all_img_lines:
+                if abs(float(line[3])) > 0.25 and abs(float(line[3])) < 1.0:
+                    lines.append(line)
 
 
     lines_len = len(lines)  # 8659
 
 # extra images, car driving on left side of the track
-# with open('data/IMG_left/driving_log.csv') as csvfile:
-#     reader = csv.reader(csvfile)
-#     # next(reader, None)
-#
-#     lines_temp = []
-#     for line in reader:
-#         line.extend([1])
-#         lines_temp.append(line)
-#
-#     # bridge
-#     for line in lines_temp[2799:3190]:               # 400 of 3285
-#         lines_temp.append(line)
-#
-#     lines.extend(lines_temp)
-#
-#     lines_len = len(lines)      # 12335
-#
-#
-# # extra images, car driving on right side of the track
-# with open('data/IMG_right/driving_log.csv') as csvfile:
-#     reader = csv.reader(csvfile)
-#     # next(reader, None)
-#
-#     lines_temp = []
-#     for line in reader:
-#         line.extend([2])
-#         lines_temp.append(line)
-#
-#     # bridge
-#     for line in lines_temp[1963:2745]:
-#         lines_temp.append(line)
-#
-#     lines.extend(lines_temp)
-#
-#     lines_len = len(lines)  # 16423
+with open('data/IMG_left/driving_log.csv') as csvfile:
+    reader = csv.reader(csvfile)
+    # next(reader, None)
+
+    lines_temp = []
+    for line in reader:
+        line.extend([1])
+        lines_temp.append(line)
+
+    # bridge
+    for line in lines_temp[2799:3190]:               # 400 of 3285
+        lines_temp.append(line)
+
+    lines.extend(lines_temp)
+
+    lines_len = len(lines)      # 12335
+
+
+# extra images, car driving on right side of the track
+with open('data/IMG_right/driving_log.csv') as csvfile:
+    reader = csv.reader(csvfile)
+    # next(reader, None)
+
+    lines_temp = []
+    for line in reader:
+        line.extend([2])
+        lines_temp.append(line)
+
+    # bridge
+    for line in lines_temp[1963:2745]:
+        lines_temp.append(line)
+
+    lines.extend(lines_temp)
+
+    lines_len = len(lines)  # 16423
 
 # extra images, car driving on left side of the bridge
 # for _ in range(4):
@@ -232,11 +233,9 @@ train_samples, validation_samples= train_test_split(lines, test_size=0.15)
 batch_size=32
 
 # compile and train the model using the generator function
-train_generator = generator(augument_images(lines), batch_size=batch_size)
-validation_generator = generator(augument_images(lines), batch_size=batch_size)
-
-for i in range(0,10):
-    print(train_generator)
+a = augument_images(lines)
+train_generator = generator(a[0], a[1], batch_size=batch_size)
+validation_generator = generator(a[0], a[1], batch_size=batch_size)
 
 # LOAD = True, loads previous model.h5 file
 # LOAD = False, starts new model
