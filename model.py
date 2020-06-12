@@ -10,7 +10,25 @@ import random
 #from matplotlib import pyplot as plt
 import math
 import pathlib
+import os
 
+
+def trans_image_x(image, steer_angle, correction):
+    rows, cols, depth = image.shape
+    x = random.randint(-20, 20)
+    y = random.randint(-20, 20)
+    
+    M = numpy.float32([[1, 0, x],[0, 1, 0]])        #y = 0
+    dst_x = cv2.warpAffine(image, M, (cols,rows))
+    
+    M = numpy.float32([[1, 0, x],[0, 1, y]])
+    dst_xy = cv2.warpAffine(image, M, (cols,rows))
+    
+    steering_correction = float(steer_angle)+ correction + x/200.0
+    
+    return dst_x, dst_xy, steering_correction
+
+    
 
 # center, left (steer right), right (steer left) 
 correction_angles = [[0.0, 0.2, -0.2], [0.3, 0.4, 0.2], [-0.3, -0.2, -0.4]]
@@ -59,17 +77,21 @@ def generator(samples, batch_size=32):
                         images.append(numpy.fliplr(image))
                         measurements.append(-steering_correction)
                         
-                        rows,cols, depth = image.shape
-                        x = random.randint(-10, 10)
-                        M = numpy.float32([[1, 0, x],[0, 1, 0]])
-                        dst = cv2.warpAffine(image, M, (cols,rows))
-                        images.append(dst)
-                        #steering_correction = calc_correction(float(batch_sample[3])+ correction)
-                        steering_correction = float(batch_sample[3])+ correction
+                        # shift image 
+                        dst_x, dst_xy, steering_correction = trans_image_x(image, batch_sample[3], correction)
+                   
+                        images.append(dst_x)
                         measurements.append(steering_correction)
                         
-                        images.append(numpy.fliplr(dst))
-                        measurements.append(-steering_correction)                                         
+                        images.append(numpy.fliplr(dst_x))
+                        measurements.append(-steering_correction) 
+                        
+                        
+                        images.append(dst_xy)
+                        measurements.append(steering_correction)
+                        
+                        images.append(numpy.fliplr(dst_xy))
+                        measurements.append(-steering_correction) 
 
                     else:
                         print("None: ", current_path)
@@ -94,17 +116,17 @@ with open('data/driving_log.csv') as csvfile:
     len_all_img_lines = len(all_img_lines)  # 8035
 
     # append 3 rounds of track
-    for line in all_img_lines[0:1700]:   # 82 of 8035
-        lines.append(line)
+#     for line in all_img_lines[0:1700]:   # 82 of 8035
+#         lines.append(line)
         
     # Add bridge images againcd 
-    for _ in range(1):
-        for line in all_img_lines[1744:1826]:   # 82 of 8035
-            lines.append(line)
-        for line in all_img_lines[2573:2657]:   # 84 of 8035
-            lines.append(line)
-        for line in all_img_lines[3408:3517]:   # 109 of 8035
-            lines.append(line)
+#    for _ in range(1):
+#         for line in all_img_lines[1744:1826]:   # 82 of 8035
+#             lines.append(line)
+#         for line in all_img_lines[2573:2657]:   # 84 of 8035
+#             lines.append(line)
+#         for line in all_img_lines[3408:3517]:   # 109 of 8035
+#             lines.append(line)
         # for line in all_img_lines[5208:5291]:   # 83 of 8035
         #     lines.append(line)
         # for line in all_img_lines[6037:6123]:   # 83 of 8035
@@ -120,12 +142,6 @@ with open('data/driving_log.csv') as csvfile:
     #     for line in all_img_lines[746:794]:   # 83 of 8035
     #         lines.append(line)
 
-    for _ in range(3):
-        for line in all_img_lines:
-            if abs(float(line[3])) > 0.25 and abs(float(line[3])) < 1.0:
-                lines.append(line)
-
-
     lines_len = len(lines)  # 8659
 
 # extra images, car driving on left side of the track
@@ -138,9 +154,9 @@ with open('data/IMG_left/driving_log.csv') as csvfile:
         line.extend([1])
         lines_temp.append(line)
 
-    # bridge
-    for line in lines_temp[2799:3190]:               # 400 of 3285
-        lines_temp.append(line)
+#     # bridge
+#     for line in lines_temp[2799:3190]:               # 400 of 3285
+#         lines_temp.append(line)
         
     lines.extend(lines_temp)
 
@@ -157,9 +173,9 @@ with open('data/IMG_right/driving_log.csv') as csvfile:
         line.extend([2])
         lines_temp.append(line)
 
-    # bridge
-    for line in lines_temp[1963:2745]:
-        lines_temp.append(line)
+#     # bridge
+#     for line in lines_temp[1963:2745]:
+#         lines_temp.append(line)
 
     lines.extend(lines_temp)
 
@@ -201,7 +217,13 @@ with open('data/IMG_bridge/driving_log.csv') as csvfile:
 #     steering_angles.extend(i[1])
 
 
-PLOT_HIST = False
+for _ in range(2):
+    for line in all_img_lines:
+        if abs(float(line[3])) > 0.1 and abs(float(line[3])) < 1.0:
+            lines.append(line)  
+
+
+PLOT_HIST = True
 if PLOT_HIST:
     # Plot histogram
     steering_angles = []
@@ -213,16 +235,18 @@ if PLOT_HIST:
     #plt.ioff()
     plt.hist(steering_angles, bins=40)
     plt.savefig("hist.png")
-    plt.show()
+#    plt.show()
     exit(0)
 
 
+  
 
+    
 from sklearn.model_selection import train_test_split
 train_samples, validation_samples= train_test_split(lines, test_size=0.15)
 
 # Set our batch size
-batch_size=32
+batch_size=64
 
 # compile and train the model using the generator function
 train_generator = generator(train_samples, batch_size=batch_size)
@@ -235,6 +259,11 @@ if LOAD:
     print("loading model")
     model = load_model('model.h5')
 else:
+    try:
+        os.remove("model.h5")
+    except:
+        pass
+    
     model = Sequential()
     model.add(Lambda(lambda x: x / 255.0 - 0.5, input_shape=(160, 320, 3)))
     model.add(Cropping2D(cropping=((70, 25), (20, 20))))
@@ -244,11 +273,11 @@ else:
     model.add(Conv2D(64, 3, 3, activation="relu"))
     model.add(Conv2D(64, 3, 3, activation="relu"))
     model.add(Flatten())
-    model.add(Dropout(0.30))
+    model.add(Dropout(0.50))
     model.add(Dense(100))
-    model.add(Dropout(0.30))
+    model.add(Dropout(0.50))
     model.add(Dense(50))
-    model.add(Dropout(0.30))
+    model.add(Dropout(0.50))
     model.add(Dense(10))
     model.add(Dense(1))
 
@@ -262,7 +291,7 @@ model.fit_generator(train_generator,
             steps_per_epoch=numpy.ceil(len(train_samples)/batch_size),
             validation_data=validation_generator,
             validation_steps=numpy.ceil(len(validation_samples)/batch_size),
-            epochs=1, verbose=1, callbacks=callbacks)
+            epochs=2, verbose=1, callbacks=callbacks)
 
 model.save("model.h5")
 print("Model saved")
