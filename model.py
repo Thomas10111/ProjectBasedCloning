@@ -1,13 +1,17 @@
-from keras.layers import Cropping2D, Conv2D, Dense, GlobalAveragePooling2D, Activation, Flatten, Lambda, Dropout
-from keras.models import Sequential, load_model
-import keras
+PLOT_HIST = False
+
+if not PLOT_HIST:
+    from keras.layers import Cropping2D, Conv2D, Dense, GlobalAveragePooling2D, Activation, Flatten, Lambda, Dropout
+    from keras.models import Sequential, load_model
+    import keras
+else:
+    from matplotlib import pyplot as plt
 import csv
 import cv2
 import numpy
 import sklearn
 import os.path
 import random
-#from matplotlib import pyplot as plt
 import math
 import pathlib
 import os
@@ -31,7 +35,7 @@ def trans_image_x(image, steer_angle, correction):
     
 
 # center, left (steer right), right (steer left) 
-correction_angles = [[0.0, 0.2, -0.2], [0.3, 0.4, 0.2], [-0.3, -0.2, -0.4]]
+correction_angles = [[0.0, 0.2, -0.2], [0.4, 0.5, 0.3], [-0.4, -0.3, -0.5]]
 
 # def calc_correction(angle):
 #     if angle > 1.0:
@@ -43,8 +47,8 @@ correction_angles = [[0.0, 0.2, -0.2], [0.3, 0.4, 0.2], [-0.3, -0.2, -0.4]]
 def generator(samples, batch_size=32):
     num_samples = len(samples)
     print("num_samples: ", num_samples)
-    while 1: # Loop forever so the generator never terminates
-#    for i in range(1):
+#    while 1: # Loop forever so the generator never terminates
+    for i in range(1):
         samples = sklearn.utils.shuffle(samples)
         for offset in range(0, num_samples, batch_size):
             batch_samples = samples[offset:offset+batch_size]
@@ -115,9 +119,9 @@ with open('data/driving_log.csv') as csvfile:
 
     len_all_img_lines = len(all_img_lines)  # 8035
 
-    # append 3 rounds of track
-#     for line in all_img_lines[0:1700]:   # 82 of 8035
-#         lines.append(line)
+    # append all rounds of track
+    for line in all_img_lines:   # 82 of 8035
+        lines.append(line)
         
     # Add bridge images againcd 
 #    for _ in range(1):
@@ -142,7 +146,7 @@ with open('data/driving_log.csv') as csvfile:
     #     for line in all_img_lines[746:794]:   # 83 of 8035
     #         lines.append(line)
 
-    lines_len = len(lines)  # 8659
+#    lines_len = len(lines)  # 8659
 
 # extra images, car driving on left side of the track
 with open('data/IMG_left/driving_log.csv') as csvfile:
@@ -217,13 +221,12 @@ with open('data/IMG_bridge/driving_log.csv') as csvfile:
 #     steering_angles.extend(i[1])
 
 
-for _ in range(2):
-    for line in all_img_lines:
-        if abs(float(line[3])) > 0.1 and abs(float(line[3])) < 1.0:
-            lines.append(line)  
+# for _ in range(1):
+#     for line in all_img_lines:
+#         if abs(float(line[3])) > 0.1 and abs(float(line[3])) < 1.0:
+#             lines.append(line)
 
 
-PLOT_HIST = True
 if PLOT_HIST:
     # Plot histogram
     steering_angles = []
@@ -235,7 +238,7 @@ if PLOT_HIST:
     #plt.ioff()
     plt.hist(steering_angles, bins=40)
     plt.savefig("hist.png")
-#    plt.show()
+    plt.show()
     exit(0)
 
 
