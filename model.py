@@ -47,8 +47,8 @@ correction_angles = [[0.0, 0.2, -0.2], [0.4, 0.5, 0.3], [-0.4, -0.3, -0.5]]
 def generator(samples, batch_size=32):
     num_samples = len(samples)
     print("num_samples: ", num_samples)
-#    while 1: # Loop forever so the generator never terminates
-    for i in range(1):
+    while 1: # Loop forever so the generator never terminates
+#    for i in range(1):
         samples = sklearn.utils.shuffle(samples)
         for offset in range(0, num_samples, batch_size):
             batch_samples = samples[offset:offset+batch_size]
