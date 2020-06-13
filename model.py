@@ -1,4 +1,4 @@
-PLOT_HIST = True
+PLOT_HIST = False
 
 if not PLOT_HIST:
     from keras.layers import Cropping2D, Conv2D, Dense, GlobalAveragePooling2D, Activation, Flatten, Lambda, Dropout
