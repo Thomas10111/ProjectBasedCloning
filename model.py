@@ -256,7 +256,7 @@ validation_generator = generator(validation_samples, batch_size=batch_size)
 
 # LOAD = True, loads previous model.h5 file
 # LOAD = False, starts new model
-LOAD = False
+LOAD = True
 if LOAD:
     print("loading model")
     model = load_model('model.h5')
@@ -293,7 +293,7 @@ model.fit_generator(train_generator,
             steps_per_epoch=numpy.ceil(len(train_samples)/batch_size),
             validation_data=validation_generator,
             validation_steps=numpy.ceil(len(validation_samples)/batch_size),
-            epochs=2, verbose=1, callbacks=callbacks)
+            epochs=1, verbose=1, callbacks=callbacks)
 
 model.save("model.h5")
 print("Model saved")
