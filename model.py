@@ -1,6 +1,6 @@
-PLOT_HIST = False
+Plot_Hist = True
 
-if not PLOT_HIST:
+if not Plot_Hist:
     from keras.layers import Cropping2D, Conv2D, Dense, GlobalAveragePooling2D, Activation, Flatten, Lambda, Dropout
     from keras.models import Sequential, load_model
     import keras
@@ -17,6 +17,7 @@ import pathlib
 import os
 
 
+# shift image in x then in y direction and scale steering angle
 def trans_image_x(image, steer_angle, correction):
     rows, cols, depth = image.shape
     x = random.randint(-20, 20)
@@ -28,7 +29,7 @@ def trans_image_x(image, steer_angle, correction):
     M = numpy.float32([[1, 0, x],[0, 1, y]])
     dst_xy = cv2.warpAffine(image, M, (cols,rows))
     
-    steering_correction = float(steer_angle)+ correction + x/200.0
+    steering_correction = float(steer_angle) + correction + x/200.0
     
     return dst_x, dst_xy, steering_correction
 
@@ -37,18 +38,11 @@ def trans_image_x(image, steer_angle, correction):
 # center, left (steer right), right (steer left) 
 correction_angles = [[0.0, 0.2, -0.2], [0.5, 0.6, 0.4], [-0.5, -0.4, -0.6]]
 
-# def calc_correction(angle):
-#     if angle > 1.0:
-#         return 1.0
-#     if angle < -1.0:
-#         return -1.0
-#     return angle
-
 def generator(samples, batch_size=32):
     num_samples = len(samples)
     print("num_samples: ", num_samples)
-    while 1: # Loop forever so the generator never terminates
-#    for i in range(1):
+#    while 1: # Loop forever so the generator never terminates
+    for i in range(1):  # to plot histogram, comment out while
         samples = sklearn.utils.shuffle(samples)
         for offset in range(0, num_samples, batch_size):
             batch_samples = samples[offset:offset+batch_size]
@@ -65,25 +59,20 @@ def generator(samples, batch_size=32):
                     
                     # In the recorded images the path is absolute
                     if not os.path.exists(current_path):
-                        #current_path = batch_sample[i]
                         p = pathlib.Path(batch_sample[1])
                         current_path = str(pathlib.Path(*p.parts[4:]))
 
                     image = cv2.imread(current_path)
                     if image is not None:
-                        #print("Found: ", current_path)
-               
+                        # append image and steering angle
                         images.append(image)
-                        #steering_correction = calc_correction(float(batch_sample[3])+ correction)
                         steering_correction = float(batch_sample[3])+ correction
-#                         print(current_path, "  steering_correction: ", steering_correction)
                         measurements.append(steering_correction)
-                        #print("current_path: ", current_path, "      steering_correction: ", steering_correction)
 
                         images.append(numpy.fliplr(image))
                         measurements.append(-steering_correction)
                         
-                        # shift image 
+                        # shift image and flip
                         dst_x, dst_xy, steering_correction = trans_image_x(image, batch_sample[3], correction)
                    
                         images.append(dst_x)
@@ -91,8 +80,7 @@ def generator(samples, batch_size=32):
                         
                         images.append(numpy.fliplr(dst_x))
                         measurements.append(-steering_correction) 
-                        
-                        
+
                         images.append(dst_xy)
                         measurements.append(steering_correction)
                         
@@ -101,65 +89,13 @@ def generator(samples, batch_size=32):
 
                     else:
                         print("None: ", current_path)
-                        #exit(-1)
             
             X_train = numpy.array(images)
             y_train = numpy.array(measurements)
             yield sklearn.utils.shuffle(X_train, y_train)
-            
-lines = []
-all_img_lines = []
-
-with open('data/driving_log.csv') as csvfile:
-    reader = csv.reader(csvfile)
-    next(reader, None)
-    
-    for i, line in enumerate(reader):
-        line.extend([0])
-        all_img_lines.append(line)
 
 
-    # append all rounds of track
-    for line in all_img_lines:   # 82 of 8035
-        lines.append(line)
-        
-
-# extra images, car driving on left side of the track
-with open('data/IMG_left/driving_log.csv') as csvfile:
-    reader = csv.reader(csvfile)
-    # next(reader, None)
-    
-    lines_temp = []
-    for line in reader:
-        line.extend([1])
-        lines_temp.append(line)
-        
-    lines.extend(lines_temp)
-
-
-# extra images, car driving on right side of the track    
-with open('data/IMG_right/driving_log.csv') as csvfile:
-    reader = csv.reader(csvfile)
-    # next(reader, None)
-
-    lines_temp = []
-    for line in reader:
-        line.extend([2])
-        lines_temp.append(line)
-
-    lines.extend(lines_temp)
-
-        
-# extra images, car on left side of the bridge
-with open('data/IMG_bridge/driving_log.csv') as csvfile:
-    reader = csv.reader(csvfile)
-    # next(reader, None)
-    for line in reader:
-        line.extend([1])
-        lines.append(line)
-
-
-if PLOT_HIST:
+def plot_histogram(lines):
     # Plot histogram
     steering_angles = []
     for b in generator(lines):
@@ -170,6 +106,49 @@ if PLOT_HIST:
     plt.savefig("hist.png")
     plt.show()
     exit(0)
+
+
+
+lines = []
+
+with open('data/driving_log.csv') as csvfile:
+    reader = csv.reader(csvfile)
+    next(reader, None)
+
+    # append all rounds of track
+    for i, line in enumerate(reader):
+        line.extend([0])
+        lines.append(line)
+        
+
+# extra images, car driving on left side of the track
+with open('data/IMG_left/driving_log.csv') as csvfile:
+    reader = csv.reader(csvfile)
+
+    for line in reader:
+        line.extend([1])
+        lines.append(line)
+
+
+# extra images, car driving on right side of the track    
+with open('data/IMG_right/driving_log.csv') as csvfile:
+    reader = csv.reader(csvfile)
+
+    for line in reader:
+        line.extend([2])
+        lines.append(line)
+        
+# extra images, car on left side of the bridge
+with open('data/IMG_bridge/driving_log.csv') as csvfile:
+    reader = csv.reader(csvfile)
+
+    for line in reader:
+        line.extend([1])
+        lines.append(line)
+
+
+if Plot_Hist:
+    plot_histogram(lines)
 
 
 
