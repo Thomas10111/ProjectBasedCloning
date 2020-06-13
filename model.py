@@ -26,7 +26,7 @@ def trans_image_x(image, steer_angle, correction):
     M = numpy.float32([[1, 0, x],[0, 1, 0]])        #y = 0
     dst_x = cv2.warpAffine(image, M, (cols,rows))
     
-    M = numpy.float32([[1, 0, x],[0, 1, y]])
+    M = numpy.float32([[1, 0, x],[0, 1, y]])        # shift in x and y direction
     dst_xy = cv2.warpAffine(image, M, (cols,rows))
     
     steering_correction = float(steer_angle) + correction + x/200.0
