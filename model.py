@@ -35,7 +35,7 @@ def trans_image_x(image, steer_angle, correction):
     
 
 # center, left (steer right), right (steer left) 
-correction_angles = [[0.0, 0.2, -0.2], [0.4, 0.5, 0.3], [-0.4, -0.3, -0.5]]
+correction_angles = [[0.0, 0.2, -0.2], [0.5, 0.6, 0.4], [-0.5, -0.4, -0.6]]
 
 # def calc_correction(angle):
 #     if angle > 1.0:
@@ -222,11 +222,11 @@ with open('data/IMG_bridge/driving_log.csv') as csvfile:
 # for i in generator(lines):
 #     steering_angles.extend(i[1])
 
-
-# for _ in range(1):
+# for _ in range(100):
 #     for line in all_img_lines:
-#         if abs(float(line[3])) > 0.1 and abs(float(line[3])) < 1.0:
+#         if abs(float(line[3])) > 0.6 and abs(float(line[3])) < 1.0:
 #             lines.append(line)
+
 
 if PLOT_HIST:
     # Plot histogram
