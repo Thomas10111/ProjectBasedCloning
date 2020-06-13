@@ -117,38 +117,12 @@ with open('data/driving_log.csv') as csvfile:
     for i, line in enumerate(reader):
         line.extend([0])
         all_img_lines.append(line)
-        #if i > 1200: break
 
-    len_all_img_lines = len(all_img_lines)  # 8035
 
     # append all rounds of track
     for line in all_img_lines:   # 82 of 8035
         lines.append(line)
         
-    # Add bridge images againcd 
-#    for _ in range(1):
-#         for line in all_img_lines[1744:1826]:   # 82 of 8035
-#             lines.append(line)
-#         for line in all_img_lines[2573:2657]:   # 84 of 8035
-#             lines.append(line)
-#         for line in all_img_lines[3408:3517]:   # 109 of 8035
-#             lines.append(line)
-        # for line in all_img_lines[5208:5291]:   # 83 of 8035
-        #     lines.append(line)
-        # for line in all_img_lines[6037:6123]:   # 83 of 8035
-        #     lines.append(line)
-        # for line in all_img_lines[6867:6954]:   # 83 of 8035
-        #     lines.append(line)
-        # for line in all_img_lines[7692:7784]:   # 83 of 8035
-        #     lines.append(line)
-
-    # Add turns
-    #     for line in all_img_lines[633:683]:   # 83 of 8035
-    #         lines.append(line)
-    #     for line in all_img_lines[746:794]:   # 83 of 8035
-    #         lines.append(line)
-
-#    lines_len = len(lines)  # 8659
 
 # extra images, car driving on left side of the track
 with open('data/IMG_left/driving_log.csv') as csvfile:
@@ -159,14 +133,8 @@ with open('data/IMG_left/driving_log.csv') as csvfile:
     for line in reader:
         line.extend([1])
         lines_temp.append(line)
-
-#     # bridge
-#     for line in lines_temp[2799:3190]:               # 400 of 3285
-#         lines_temp.append(line)
         
     lines.extend(lines_temp)
-
-    lines_len = len(lines)      # 12335
 
 
 # extra images, car driving on right side of the track    
@@ -179,25 +147,8 @@ with open('data/IMG_right/driving_log.csv') as csvfile:
         line.extend([2])
         lines_temp.append(line)
 
-#     # bridge
-#     for line in lines_temp[1963:2745]:
-#         lines_temp.append(line)
-
     lines.extend(lines_temp)
 
-    lines_len = len(lines)  # 16423
-
-# extra images, car driving on left side of the bridge
-# for _ in range(4):
-#     with open('data/IMG_bridge_left/driving_log.csv') as csvfile:
-#         reader = csv.reader(csvfile)
-#         # next(reader, None)
-#
-#         for line in reader:
-#             line.extend([1])
-#             lines.append(line)
-#
-#     lines_len = len(lines)  # 18543
         
 # extra images, car on left side of the bridge
 with open('data/IMG_bridge/driving_log.csv') as csvfile:
@@ -207,34 +158,12 @@ with open('data/IMG_bridge/driving_log.csv') as csvfile:
         line.extend([1])
         lines.append(line)
 
-    lines_len = len(lines)  # 18687
-
-# with open('data/IMG_center/driving_log.csv') as csvfile:
-#     reader = csv.reader(csvfile)
-#     # next(reader, None)
-#     for line in reader:
-#         line.extend([0])
-#     for i in range(2):     
-#         for line in lines[2320:2410]:
-#             lines.append(line)
-
-
-# for i in generator(lines):
-#     steering_angles.extend(i[1])
-
-# for _ in range(100):
-#     for line in all_img_lines:
-#         if abs(float(line[3])) > 0.6 and abs(float(line[3])) < 1.0:
-#             lines.append(line)
-
 
 if PLOT_HIST:
     # Plot histogram
     steering_angles = []
     for b in generator(lines):
         steering_angles.extend(b[1])
-
-    len_steering_angles = len(steering_angles)
 
     #plt.ioff()
     plt.hist(steering_angles, bins=40)
