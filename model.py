@@ -1,4 +1,4 @@
-PLOT_HIST = False
+PLOT_HIST = True
 
 if not PLOT_HIST:
     from keras.layers import Cropping2D, Conv2D, Dense, GlobalAveragePooling2D, Activation, Flatten, Lambda, Dropout
@@ -57,6 +57,8 @@ def generator(samples, batch_size=32):
             measurements = []
             
             for batch_sample in batch_samples:
+                if abs(float(batch_sample[3])) < 0.055 and random.random() < 0.85:
+                    continue
                 for i, correction in enumerate(correction_angles[batch_sample[7]]):
                     filename= batch_sample[i].split('/')[-1]
                     current_path=str(pathlib.Path('data/IMG/' + filename))
@@ -226,7 +228,6 @@ with open('data/IMG_bridge/driving_log.csv') as csvfile:
 #         if abs(float(line[3])) > 0.1 and abs(float(line[3])) < 1.0:
 #             lines.append(line)
 
-
 if PLOT_HIST:
     # Plot histogram
     steering_angles = []
@@ -242,9 +243,7 @@ if PLOT_HIST:
     exit(0)
 
 
-  
 
-    
 from sklearn.model_selection import train_test_split
 train_samples, validation_samples= train_test_split(lines, test_size=0.15)
 
