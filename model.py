@@ -175,9 +175,9 @@ else:
         pass
     
     model = Sequential()
-    model.add(Lambda(lambda x: x / 255.0 - 0.5, input_shape=(160, 320, 3)))
     model.add(Cropping2D(cropping=((70, 25), (20, 20))))
-    model.add(Conv2D(24, 5, 5, subsample=(2,2), activation="relu"))
+    model.add(Lambda(lambda x: x / 255.0 - 0.5, input_shape=(160, 320, 3))) # "normalization after cropping", does it make a difference? Smaller image?
+    model.add(Conv2D(24, 5, 5, subsample=(2,2), activation="relu"))         # "You can try to use ELU or Leaky ReLU as activation functions." Interesting, difference?
     model.add(Conv2D(36, 5, 5, subsample=(2,2), activation="relu"))
     model.add(Conv2D(48, 5, 5, subsample=(2,2), activation="relu"))
     model.add(Conv2D(64, 3, 3, activation="relu"))
