@@ -67,11 +67,11 @@ For details about how I created the training data, see the next section.
 #### 1. Solution Design Approach
 
 The overall strategy for deriving a model architecture was to use an existing architecture that has proven to work. I used the nvidia model because
-it was mentioned in class.My first steps were to train the data only with provided data, and then added trainin data where necessary. This
+it was mentioned in class.My first steps were to train the data only with provided data, and then added training data where necessary. This
 result of this approach was very unreliable, sometimes the car left the track at the first turn, sometimes crashed on the bridge, or did a complete round but touched the road markings. 
 
 The first reviewer pointed me to this website https://medium.com/@ksakmann/behavioral-cloning-make-a-car-drive-like-yourself-dc6021152713, which links to this website https://chatbotslife.com/using-augmentation-to-mimic-human-driving-496b569760a9#.jqcy5fcw6.
-The second link was actually more helpful to me. So, I tried to get the same number of of examples for each steering angle. After preprossing the data, the histogram looks like this.
+The second link was actually more helpful to me. So, I tried to get the same number of of examples for each steering angle. After preprosessing the data, the histogram looks like this.
 
 <img src="images_writeup/hist.png" alt="histogram"  width="300">
 
@@ -124,7 +124,7 @@ One challenging part was the bridge, so I presented the bridge images several ti
 
 <img src="images_writeup/center_2020_05_20_04_28_22_768.jpg" alt="Visualization dataset"  width="300">
 
-Shifting the input images (model.py, line 21)in x and y direction and randomly removing images with a ateering angle around 0 (model.py, line 54). Other data augmentation methods
+Shifting the input images (model.py, line 21) in x and y direction and randomly removing images with a steering angle around 0 (model.py, line 54). Other data augmentation methods
 mentioned on the websites, like changing brightness of the training images, did not make sense to me because brightness never changes in the simulator. 
 
 <img src="images_writeup/x_shift_-20_steering_-0.19996600000000003.jpg" alt="x shift"  width="300">
@@ -132,7 +132,7 @@ mentioned on the websites, like changing brightness of the training images, did 
 
 
 
-To further augment the data set and get an even distribution of negavtive and positive steering angles, I also flipped images (see model.py, lines 71, 81, 87).
+To further augment the data set and get an even distribution of negative and positive steering angles, I also flipped images (see model.py, lines 71, 81, 87).
 
 
 After the collection process, I had 14771 images (without flipping and shifting) and 131454 data points after data augmentation.
