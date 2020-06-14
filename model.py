@@ -1,4 +1,4 @@
-Plot_Hist = True
+Plot_Hist = False
 
 if not Plot_Hist:
     from keras.layers import Cropping2D, Conv2D, Dense, GlobalAveragePooling2D, Activation, Flatten, Lambda, Dropout
@@ -41,8 +41,8 @@ correction_angles = [[0.0, 0.2, -0.2], [0.5, 0.6, 0.4], [-0.5, -0.4, -0.6]]
 def generator(samples, batch_size=32):
     num_samples = len(samples)
     print("num_samples: ", num_samples)
-#    while 1: # Loop forever so the generator never terminates
-    for i in range(1):  # to plot histogram, comment out while
+    while 1: # Loop forever so the generator never terminates
+#    for i in range(1):  # to plot histogram, comment out while
         samples = sklearn.utils.shuffle(samples)
         for offset in range(0, num_samples, batch_size):
             batch_samples = samples[offset:offset+batch_size]
@@ -164,7 +164,7 @@ validation_generator = generator(validation_samples, batch_size=batch_size)
 
 # LOAD = True, loads previous model.h5 file
 # LOAD = False, starts new model
-LOAD = True
+LOAD = False
 if LOAD:
     print("loading model")
     model = load_model('model.h5')
@@ -201,7 +201,7 @@ model.fit_generator(train_generator,
             steps_per_epoch=numpy.ceil(len(train_samples)/batch_size),
             validation_data=validation_generator,
             validation_steps=numpy.ceil(len(validation_samples)/batch_size),
-            epochs=1, verbose=1, callbacks=callbacks)
+            epochs=3, verbose=1, callbacks=callbacks)
 
 model.save("model.h5")
 print("Model saved")
