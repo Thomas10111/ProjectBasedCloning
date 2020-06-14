@@ -12,16 +12,6 @@ The goals / steps of this project are the following:
 * Summarize the results with a written report
 
 
-[//]: # (Image References)
-
-[image1]: ./examples/placeholder.png "Model Visualization"
-[image2]: ./examples/placeholder.png "Grayscaling"
-[image3]: ./examples/placeholder_small.png "Recovery Image"
-[image4]: ./examples/placeholder_small.png "Recovery Image"
-[image5]: ./examples/placeholder_small.png "Recovery Image"
-[image6]: ./examples/placeholder_small.png "Normal Image"
-[image7]: ./examples/placeholder_small.png "Flipped Image"
-
 ## Rubric Points
 ### Here I will consider the [rubric points](https://review.udacity.com/#!/rubrics/432/view) individually and describe how I addressed each point in my implementation.  
 
@@ -35,7 +25,7 @@ My project includes the following files:
 * drive.py for driving the car in autonomous mode
 * model.h5 containing a trained convolution neural network 
 * writeup.md summarizing the results
-* video_output.mp4 showing the car driving 1.5 rounds on track 1
+* video_output.mp4 showing the car driving 2 rounds on track 1
 
 #### 2. Submission includes functional code
 Using the Udacity provided simulator and my drive.py file, the car can be driven autonomously around the track by executing 
@@ -51,20 +41,20 @@ The model.py file contains the code for training and saving the convolution neur
 
 #### 1. An appropriate model architecture has been employed
 
-My model consists of a convolution neural network with 5x5 and 3x3 filter sizes, respectively, and depths between 24 and 64 (model.py lines 162-168) 
+My model consists of a convolution neural network with 5x5 and 3x3 filter sizes, respectively, and depths between 24 and 64 (model.py lines 180-184) 
 
-The model includes RELU layers to introduce nonlinearity (code line 162-166), and the data is normalized in the model using a Keras lambda layer (code line 160). 
+The model includes RELU layers to introduce nonlinearity (code line 180-184), and the data is normalized in the model using a Keras lambda layer (code line 178). 
 
 #### 2. Attempts to reduce overfitting in the model
 
-The model contains a dropout layers in order to reduce overfitting (model.py line 168). 
+The model contains a dropout layers in order to reduce overfitting (model.py lines, 186, 188, 190). 
 
-The model was trained and validated on different data sets to ensure that the model was not overfitting (code line 42+43, 57-129). 
+The model was trained and validated on different data sets to ensure that the model was not overfitting (code line 114-139). 
 The model was tested by running it through the simulator and ensuring that the vehicle could stay on the track.
 
 #### 3. Model parameter tuning
 
-The model used an adam optimizer, so the learning rate was not tuned manually (model.py line 177).
+The model used an adam optimizer, so the learning rate was not tuned manually (model.py line 197).
 
 #### 4. Appropriate training data
 
@@ -76,10 +66,18 @@ For details about how I created the training data, see the next section.
 
 #### 1. Solution Design Approach
 
-The overall strategy for deriving a model architecture was to use an existing architecture that has proven to work.
-I used the nvidia model because it was mentioned in class. After a while I realized that after two epochs the model is usually trained good enough and further training did not improve driving behavior.
-So, I only trained for two epochs and added the images to the training set where the car left the track or crashed.
-The bridge was the biggest challenge.
+The overall strategy for deriving a model architecture was to use an existing architecture that has proven to work. I used the nvidia model because
+it was mentioned in class.My first steps were to train the data only with provided data, and then added trainin data where necessary. This
+result of this approach was very unreliable, sometimes the car left the track at the first turn, sometimes crashed on the bridge, or did a complete round but touched the road markings. 
+
+The first reviewer pointed me to this website https://medium.com/@ksakmann/behavioral-cloning-make-a-car-drive-like-yourself-dc6021152713, which links to this website https://chatbotslife.com/using-augmentation-to-mimic-human-driving-496b569760a9#.jqcy5fcw6.
+The second link was actually more helpful to me. So, I tried to get the same number of of examples for each steering angle. After preprossing the data, the histogram looks like this.
+
+<img src="images_writeup/hist.png" alt="histogram"  width="300">
+
+After playing around with the model and the simulator for a while I realized that training the model for more than 2 to 3 epochs does not improve the model. I only trained for two epochs, ran 
+the simulator and then trained for one more epoch.
+
 The final step was to run the simulator to see how well the car was driving around track one. 
 At the end of the process, the vehicle is able to drive autonomously around the track without leaving the road.
 
@@ -121,15 +119,24 @@ I then recorded the vehicle driving the left side and right sides of the road. I
 <img src="images_writeup/center_2020_04_30_20_46_30_964.jpg" alt="right"  width="300">
 <img src="images_writeup/center_2020_05_20_04_28_38_415.jpg" alt="bridge left"  width="300">
 
-The most challenging part was the bridge, so I presented the bridge images several times to the network. Furthermore I recorded images while the car was on the bridge turned slightly to the left.
+One challenging part was the bridge, so I presented the bridge images several times to the network. Furthermore I recorded images while the car was on the bridge turned slightly to the left.
+(After doing data augmentation I am not sure if these training images are still needed.)
 
 <img src="images_writeup/center_2020_05_20_04_28_22_768.jpg" alt="Visualization dataset"  width="300">
 
-To augment the data set, I also flipped images (see model.py, line 42).
+Shifting the input images (model.py, line 21)in x and y direction and randomly removing images with a ateering angle around 0 (model.py, line 54). Other data augmentation methods
+mentioned on the websites, like changing brightness of the training images, did not make sense to me because brightness never changes in the simulator. 
+
+<img src="images_writeup/x_shift_-20_steering_-0.19996600000000003.jpg" alt="x shift"  width="300">
+<img src="images_writeup/xy_shift_-14_steering_0.23003400000000002.jpg" alt="xy shift"  width="300">
 
 
-After the collection process, I had 15883 (without flipping) number of data points.
 
-I finally randomly shuffled the data set and put 15% (model.py, line 141) of the data into a validation set. 
+To further augment the data set and get an even distribution of negavtive and positive steering angles, I also flipped images (see model.py, lines 71, 81, 87).
 
-I used this training data for training the model. The validation set helped determine if the model was over or under fitting. Two epochs were sufficient to learn a good driving behavior. I used an adam optimizer so that manually training the learning rate wasn't necessary.
+
+After the collection process, I had 14771 images (without flipping and shifting) and 131454 data points after data augmentation.
+
+I finally randomly shuffled the data set and put 15% (model.py, line 157) of the data into a validation set. 
+
+I used this training data for training the model. The validation set helped determine if the model was over or under fitting. Three epochs were sufficient to learn a good driving behavior. I used an adam optimizer so that manually training the learning rate wasn't necessary.
